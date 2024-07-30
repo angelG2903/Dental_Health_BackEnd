@@ -49,3 +49,9 @@ El servidor se iniciará en el puerto especificado en el archivo `.env`.
 - `routes/`: Contiene las definiciones de rutas.
 - `config/`: Contiene la configuración de la base de datos y otros archivos de configuración.
 - `middlewares/`: Contiene los middlewares de la aplicación.
+
+## Documentación en Swagger UI `(En construcción)`
+Ejecuta el servidor e ingresar a la siguiente ruta para ingresar a la documentación de la API 
+```
+http://localhost:5000/api-docs/
+```

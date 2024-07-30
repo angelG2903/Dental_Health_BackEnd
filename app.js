@@ -2,7 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const { connectDB } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
-
+const medicalFormRoutes = require('./routes/medicalFormRoutes');
+const cronJobs = require('./utils/cronJobs');
+const { swaggerUi, specs } = require('./config/swagger');
 
 const app = express();
 app.use(express.json());
@@ -14,8 +16,13 @@ connectDB();
 /* const { sequelize } = require('./config/db');
 sequelize.sync({ alter: true }); */
 
+// Ruta para Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
 // Rutas
 app.use('/api/auth', authRoutes);
+app.use('/api/medicalForm', medicalFormRoutes);
+
 
 // Middleware de errores
 app.use((err, req, res, next) => {
