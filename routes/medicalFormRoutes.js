@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, update, deleteExpe, find } = require('../controllers/medicalFormController')
+const { register, update, deleteExpe, find } = require('../controllers/medicalFormController');
 
 const router = express.Router();
 

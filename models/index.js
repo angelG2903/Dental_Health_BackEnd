@@ -6,6 +6,7 @@ const CardiovascularSystem = require('./CardiovascularSystem');
 const EtsDisease = require('./EtsDisease');
 const PathologicalHistory = require('./PathologicalHistory');
 const OralCavity = require('./OralCavity');
+const Promotion = require('./Promotion');
 
 module.exports = {
     Login,
@@ -16,4 +17,5 @@ module.exports = {
     EtsDisease,
     PathologicalHistory,
     OralCavity,
+    Promotion,
 };

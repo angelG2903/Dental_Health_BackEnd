@@ -17,7 +17,7 @@ exports.register = async (req, res) => {
         const valitedId = await Patient.findOne({ where: { id } })
         const existingMedicalHistory = await MedicalHistory.findOne({ where: { patientId: id } });
         if (!valitedId) {
-            return res.status(401).json({ error: 'Invalid Id' });
+            return res.status(404).json({ error: 'Patient not found' });
         } else if (existingMedicalHistory) {
             return res.status(409).json({ error: 'Duplicate data found' });
         }

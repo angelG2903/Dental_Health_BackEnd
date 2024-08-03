@@ -16,7 +16,11 @@ const options = {
       },
     ],
   },
-  apis: ['./routes/swaggerRoutes/*.js'],
+  apis: [
+    './routes/swaggerRoutes/promotion/*.js',
+    './routes/swaggerRoutes/auth/*.js',
+    './routes/swaggerRoutes/medicalForm/*.js'
+  ],
 };
 
 const specs = swaggerJsdoc(options);
