@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const validRoles = ['doctor', 'patient'];
-const validGender = ['femenino', 'masculino']
+const validGender = ['femenino', 'masculino'];
 
 exports.register = async (req, res) => {
     const { 

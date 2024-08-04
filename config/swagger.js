@@ -19,7 +19,8 @@ const options = {
   apis: [
     './routes/swaggerRoutes/promotion/*.js',
     './routes/swaggerRoutes/auth/*.js',
-    './routes/swaggerRoutes/medicalForm/*.js'
+    './routes/swaggerRoutes/medicalForm/*.js',
+    './routes/swaggerRoutes/dentalExam/*.js'
   ],
 };
 

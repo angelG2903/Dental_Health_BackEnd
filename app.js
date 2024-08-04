@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const { connectDB } = require('./config/db');
 const { swaggerUi, specs } = require('./config/swagger');
-const { authRoutes, medicalFormRoutes, promotionRoutes } = require('./routes');
+const { authRoutes, medicalFormRoutes, promotionRoutes, dentalExamRoutes } = require('./routes');
 const cronJobs = require('./utils/cronJobs');
 
 const app = express();
@@ -22,6 +22,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/api/auth', authRoutes);
 app.use('/api/medicalForm', medicalFormRoutes);
 app.use('/api/promotion', promotionRoutes);
+app.use('/api/dentalExam', dentalExamRoutes);
 
 
 // Middleware de errores
