@@ -1,5 +1,6 @@
 const express = require('express');
 const { register, getAllPromotions, getPromotionById, updatePromotion, deletePromotion } = require('../controllers/promotionController');
+const verifyToken = require('../middlewares/verifyToken');
 
 const router = express.Router();
 

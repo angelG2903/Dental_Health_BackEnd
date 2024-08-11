@@ -1,5 +1,6 @@
 const express = require('express');
 const { register, update, deleteExpe, find } = require('../controllers/medicalFormController');
+const verifyToken = require('../middlewares/verifyToken');
 
 const router = express.Router();
 

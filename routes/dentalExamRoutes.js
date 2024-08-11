@@ -1,5 +1,6 @@
 const express = require('express');
 const { create, getAllDentalExams, updateDentalExam, deleteDentalExam } = require('../controllers/dentalExamController');
+const verifyToken = require('../middlewares/verifyToken');
 
 const router = express.Router();
 
