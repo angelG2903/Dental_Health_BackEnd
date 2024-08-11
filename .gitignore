@@ -33,5 +33,5 @@ uploads/*
 temp_uploads/*
 
 # directories files
-!uploads/ .gitkeep
-!temp_uploads/ .gitkeep
+!uploads/.gitkeep
+!temp_uploads/.gitkeep
