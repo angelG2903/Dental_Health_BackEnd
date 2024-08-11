@@ -29,8 +29,9 @@ build/
 coverage/
 
 # Files
-
+uploads/*
+temp_uploads/*
 
 # directories files
-!uploads/
-!temp_uploads/
+!uploads/ .gitkeep
+!temp_uploads/ .gitkeep
