@@ -1,5 +1,4 @@
-const { Op } = require('sequelize');
-const { Patient, Appointment } = require('../models');
+const { Patient, Appointment, Login } = require('../models');
 
 exports.register = async (req, res) => {
     const { id } = req.params;
@@ -8,7 +7,10 @@ exports.register = async (req, res) => {
 
     try {
 
-        const validationId = await Patient.findOne({ where: { id } });
+        const validationId = await Patient.findOne({ 
+            where: { id }
+        });
+
         if (!validationId) {
             return res.status(404).json({ error: 'Patient not found' });
         }
@@ -37,7 +39,7 @@ exports.register = async (req, res) => {
         // Verificar que no haya un conflicto de horario (misma hora)
         const conflictAppointment = await Appointment.findOne({
             where: {
-               patientId: id,
+               date,
                time
             }
         });
@@ -57,7 +59,25 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: 'Appointment already exists for this patient' });
         }
 
-        await Appointment.create({ patientId: id, date, time });
+        
+
+        const newAppointment = await Appointment.create({ patientId: id, date, time });
+
+        const patientNameResult = await Login.findOne({ 
+            where: { id: validationId.loginId },
+            attributes: ['name']
+        });
+        const patientName = patientNameResult.name;
+
+        // falta meter la informacion de cuando fue su ultima cita si es que tuvo :D
+
+        // notification
+        const io = req.app.get('io');
+        io.emit('newAppointment',{
+            patientName,
+            date,
+            time
+        });
 
         res.status(201).json({ patientId: id, date, time });
 

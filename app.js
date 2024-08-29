@@ -1,11 +1,15 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const { connectDB } = require('./config/db');
 const { swaggerUi, specs } = require('./config/swagger');
 const { authRoutes, medicalFormRoutes, promotionRoutes, dentalExamRoutes, appointmentRoutes } = require('./routes');
 const cronJobs = require('./utils/cronJobs');
 
 const app = express();
+
+app.use(cors());
+
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
