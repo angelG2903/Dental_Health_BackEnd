@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { connectDB } = require('./config/db');
 const { swaggerUi, specs } = require('./config/swagger');
-const { authRoutes, medicalFormRoutes, promotionRoutes, dentalExamRoutes, appointmentRoutes } = require('./routes');
+const { authRoutes, medicalFormRoutes, promotionRoutes, dentalExamRoutes, appointmentRoutes, messageRoutes } = require('./routes');
 const cronJobs = require('./utils/cronJobs');
 
 const app = express();
@@ -29,6 +29,7 @@ app.use('/api/medicalForm', medicalFormRoutes);
 app.use('/api/promotion', promotionRoutes);
 app.use('/api/dentalExam', dentalExamRoutes);
 app.use('/api/appointment', appointmentRoutes);
+app.use('/api/message', messageRoutes);
 
 
 // Middleware de errores
