@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { connectDB } = require('./persistence/config/db');
 const { swaggerUi, specs } = require('./persistence/config/swagger');
 const { authRoutes, medicalFormRoutes, promotionRoutes, dentalExamRoutes, appointmentRoutes, messageRoutes } = require('./presentation/routes');
@@ -11,7 +12,7 @@ const app = express();
 app.use(cors());
 
 app.use(express.json());
-app.use('/infrastructure/uploads', express.static('uploads'));
+app.use('/infrastructure/uploads', express.static(path.join(__dirname, '/infrastructure/uploads')));
 
 connectDB();
 

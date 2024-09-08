@@ -7,7 +7,7 @@ const router = express.Router();
 router.post('/registerDoctor', upload.fields([
     { name: 'profilePicture', maxCount: 1 },
     { name: 'clinicLogo', maxCount: 1 },
-    { name: 'authorizationFile', maxCount: 1 },
+    { name: 'authorizationFile', maxCount: 1 }
 ]), registerDoctor);
 
 router.post('/registerPatient', upload.fields([
