@@ -35,7 +35,7 @@ const Patient = sequelize.define('Patient', {
     
 });
 
-Login.hasOne(Patient, { foreignKey: 'loginId' });
-Patient.belongsTo(Login, { foreignKey: 'loginId' });
+Login.hasOne(Patient, { foreignKey: 'loginId', onDelete: 'CASCADE' });
+Patient.belongsTo(Login, { foreignKey: 'loginId', onDelete: 'CASCADE' });
 
 module.exports = Patient;

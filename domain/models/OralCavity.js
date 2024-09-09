@@ -55,7 +55,7 @@ const OralCavity = sequelize.define('OralCavity', {
 
 });
 
-Patient.hasMany(OralCavity, { foreignKey: 'patientId' });
-OralCavity.belongsTo(Patient, { foreignKey: 'patientId' });
+Patient.hasMany(OralCavity, { foreignKey: 'patientId', onDelete: 'CASCADE' });
+OralCavity.belongsTo(Patient, { foreignKey: 'patientId', onDelete: 'CASCADE' });
 
 module.exports = OralCavity;

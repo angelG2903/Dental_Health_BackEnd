@@ -31,7 +31,7 @@ const DentalExam = sequelize.define('DentalExam', {
 
 });
 
-Patient.hasOne(DentalExam, { foreignKey: 'patientId' });
-DentalExam.belongsTo(Patient, { foreignKey: 'patientId' });
+Patient.hasOne(DentalExam, { foreignKey: 'patientId', onDelete: 'CASCADE' });
+DentalExam.belongsTo(Patient, { foreignKey: 'patientId', onDelete: 'CASCADE' });
 
 module.exports = DentalExam;

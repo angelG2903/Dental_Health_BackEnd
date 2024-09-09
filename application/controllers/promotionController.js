@@ -151,7 +151,7 @@ exports.updatePromotion = async (req, res) => {
             return res.status(400).json({ error: 'Title and description are required' });
         }
 
-         // Si hay una nueva imagen, eliminar la anterior y mover la nueva
+        // Si hay una nueva imagen, eliminar la anterior y mover la nueva
         if (promotionalImage) {
             // Eliminar la imagen anterior si existe
             if (promotion.promotionalImage) {
@@ -171,6 +171,7 @@ exports.updatePromotion = async (req, res) => {
 
         res.status(200).json({ message: 'Promotion updated successfully' });
     } catch (error) {
+        if (promotionalImage) deleteFile(path.join(tempUploadDir, promotionalImage));
         res.status(500).json({ error: 'server error', details: error.message });
     }
 }

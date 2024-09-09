@@ -75,7 +75,7 @@ const MedicalHistory = sequelize.define('MedicalHistory', {
 
 });
 
-Patient.hasMany(MedicalHistory, { foreignKey: 'patientId' });
-MedicalHistory.belongsTo(Patient, { foreignKey: 'patientId' });
+Patient.hasMany(MedicalHistory, { foreignKey: 'patientId', onDelete: 'CASCADE' });
+MedicalHistory.belongsTo(Patient, { foreignKey: 'patientId', onDelete: 'CASCADE' });
 
 module.exports = MedicalHistory;

@@ -35,7 +35,7 @@ const EtsDisease = sequelize.define('EtsDisease', {
 
 });
 
-Patient.hasMany(EtsDisease, { foreignKey: 'patientId' });
-EtsDisease.belongsTo(Patient, { foreignKey: 'patientId' });
+Patient.hasMany(EtsDisease, { foreignKey: 'patientId', onDelete: 'CASCADE' });
+EtsDisease.belongsTo(Patient, { foreignKey: 'patientId', onDelete: 'CASCADE' });
 
 module.exports = EtsDisease;

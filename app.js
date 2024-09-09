@@ -18,7 +18,7 @@ connectDB();
 
 // Sincronizar modelos (Solo en desarrollo)
 
-/* const { sequelize } = require('./config/db');
+/* const { sequelize } = require('./persistence/config/db');
 sequelize.sync({ alter: true }); */
 
 // Ruta para Swagger

@@ -79,7 +79,7 @@ const PathologicalHistory = sequelize.define('PathologicalHistory', {
 
 });
 
-Patient.hasMany(PathologicalHistory, { foreignKey: 'patientId' });
-PathologicalHistory.belongsTo(Patient, { foreignKey: 'patientId' });
+Patient.hasMany(PathologicalHistory, { foreignKey: 'patientId', onDelete: 'CASCADE' });
+PathologicalHistory.belongsTo(Patient, { foreignKey: 'patientId', onDelete: 'CASCADE' });
 
 module.exports = PathologicalHistory;

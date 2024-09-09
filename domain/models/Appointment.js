@@ -31,7 +31,7 @@ const Appointment = sequelize.define('Appointment', {
     }
 });
 
-Patient.hasMany(Appointment, { foreignKey: 'patientId' });
-Appointment.belongsTo(Patient, { foreignKey: 'patientId' });
+Patient.hasMany(Appointment, { foreignKey: 'patientId', onDelete: 'CASCADE' });
+Appointment.belongsTo(Patient, { foreignKey: 'patientId', onDelete: 'CASCADE' });
 
 module.exports = Appointment;

@@ -51,8 +51,8 @@ const Doctor = sequelize.define('Doctor', {
 
 });
 
-Login.hasOne(Doctor, { foreignKey: 'loginId' });
-Doctor.belongsTo(Login, { foreignKey: 'loginId' });
+Login.hasOne(Doctor, { foreignKey: 'loginId', onDelete: 'CASCADE' });
+Doctor.belongsTo(Login, { foreignKey: 'loginId', onDelete: 'CASCADE' });
 
 
 module.exports = Doctor;

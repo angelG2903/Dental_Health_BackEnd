@@ -1,9 +1,13 @@
+const { Op } = require('sequelize');
+
 const { Patient, MedicalHistory, CardiovascularSystem, EtsDisease, PathologicalHistory, OralCavity } = require('../../domain/models');
 
 
 exports.register = async (req, res) => {
-    const {
-        id, 
+
+    const { id } = req.params;
+
+    const { 
         weight, size, tA, fC, fR, t, history1, history2, history3, history4, history5, history6, history7, history8,
         cardiovascular1, cardiovascular2, cardiovascular3, cardiovascular4, cardiovascular5, cardiovascular6,
         disease1, disease2, disease3, disease4,
@@ -119,31 +123,35 @@ exports.update = async (req, res) => {
     }
 };
 
-// -----------------------FALTA REVISAR------------------------------------------------
-exports.deleteExpe = async (req, res) => {
-    const { id } = req.params;
-
+exports.getAllMedicalForm = async (req, res) => {
     try {
-        const patient = await Patient.findOne({ where: { id } });
-        if (!patient) {
-            return res.status(404).json({ error: 'Medical record not found' });
+        const patients = await Patient.findAll({
+            include: [
+                {
+                    model: MedicalHistory,
+                    where: {
+                        id: { [Op.ne]: null }
+                    },
+                }, 
+                CardiovascularSystem, 
+                EtsDisease, 
+                PathologicalHistory, 
+                OralCavity
+            ]
+        });
+
+        if (patients.length === 0) {
+            return res.status(404).json({ error: 'No medical records found' });
         }
 
-        await MedicalHistory.destroy({ where: { patientId: id } });
-        await CardiovascularSystem.destroy({ where: { patientId: id } });
-        await EtsDisease.destroy({ where: { patientId: id } });
-        await PathologicalHistory.destroy({ where: { patientId: id } });
-        await OralCavity.destroy({ where: { patientId: id } });
-
-        res.status(200).json({ message: 'Medical record deleted successfully' });
-
+        res.status(200).json(patients);
     } catch (error) {
-        res.status(500).json({ error: 'server error', details: error.message });
+        res.status(500).json({ error: 'Server error', details: error.message });
     }
 };
 
 
-exports.find = async (req, res) => {
+exports.getMedicalFormById = async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -154,6 +162,28 @@ exports.find = async (req, res) => {
         }
 
         res.status(200).json(patient);
+
+    } catch (error) {
+        res.status(500).json({ error: 'server error', details: error.message });
+    }
+};
+
+exports.deleteExpe = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const medical = await MedicalHistory.findOne({ where: { id } });
+        if (!medical) {
+            return res.status(404).json({ error: 'Medical record not found' });
+        }
+
+        await MedicalHistory.destroy({ where: { id } });
+        await CardiovascularSystem.destroy({ where: { id } });
+        await EtsDisease.destroy({ where: { id } });
+        await PathologicalHistory.destroy({ where: { id } });
+        await OralCavity.destroy({ where: { id } });
+
+        res.status(200).json({ message: 'Medical record deleted successfully' });
 
     } catch (error) {
         res.status(500).json({ error: 'server error', details: error.message });

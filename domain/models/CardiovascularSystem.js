@@ -43,7 +43,7 @@ const CardiovascularSystem = sequelize.define('CardiovascularSystem', {
 
 });
 
-Patient.hasMany(CardiovascularSystem, { foreignKey: 'patientId' });
-CardiovascularSystem.belongsTo(Patient, { foreignKey: 'patientId' });
+Patient.hasMany(CardiovascularSystem, { foreignKey: 'patientId', onDelete: 'CASCADE' });
+CardiovascularSystem.belongsTo(Patient, { foreignKey: 'patientId', onDelete: 'CASCADE' });
 
 module.exports = CardiovascularSystem;

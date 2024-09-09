@@ -29,7 +29,7 @@ exports.register = async (req, res) => {
         const [hour, minute] = time.split(':').map(Number);
         const appointmentTime = hour * 100 + minute; // Ej: 14:30 -> 1430
         const startTime = 900; // 9:00 AM -> 0900
-        const endTime = 1800; // 5:00 PM -> 1700
+        const endTime = 1800; // 6:00 PM -> 1800
 
         // Verificar que la hora esté dentro del rango permitido
         if (appointmentTime < startTime || appointmentTime >= endTime) {
@@ -58,8 +58,6 @@ exports.register = async (req, res) => {
         if (duplicateAppointment) {
             return res.status(400).json({ error: 'Appointment already exists for this patient' });
         }
-
-        
 
         const newAppointment = await Appointment.create({ patientId: id, date, time });
 

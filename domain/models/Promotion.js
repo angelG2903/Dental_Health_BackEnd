@@ -31,7 +31,7 @@ const Promotion = sequelize.define('Promotion', {
 
 });
 
-Doctor.hasOne(Promotion, { foreignKey: 'doctorId' });
-Promotion.belongsTo(Doctor, { foreignKey: 'doctorId' });
+Doctor.hasOne(Promotion, { foreignKey: 'doctorId', onDelete: 'CASCADE' });
+Promotion.belongsTo(Doctor, { foreignKey: 'doctorId', onDelete: 'CASCADE' });
 
 module.exports = Promotion;

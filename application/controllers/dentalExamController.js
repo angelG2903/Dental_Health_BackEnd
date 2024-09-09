@@ -105,7 +105,6 @@ exports.updateDentalExam = async (req, res) => {
             return res.status(400).json({ error: 'Invalid State' });
         }
 
-
         // Validamos que no se duplique el toothNumber para el mismo patientId
         if (toothNumber) {
             const duplicateTooth = await DentalExam.findOne({
