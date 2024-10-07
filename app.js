@@ -6,10 +6,17 @@ const { connectDB } = require('./persistence/config/db');
 const { swaggerUi, specs } = require('./persistence/config/swagger');
 const { authRoutes, medicalFormRoutes, promotionRoutes, dentalExamRoutes, appointmentRoutes, messageRoutes } = require('./presentation/routes');
 const cronJobs = require('./infrastructure/utils/cronJobs');
+const cookieParser = require('cookie-parser'); 
 
 const app = express();
 
-app.use(cors());
+// Usar cookie-parser como middleware global
+app.use(cookieParser());
+
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
 
 app.use(express.json());
 app.use('/infrastructure/uploads', express.static(path.join(__dirname, '/infrastructure/uploads')));

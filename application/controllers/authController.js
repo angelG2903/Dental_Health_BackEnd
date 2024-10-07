@@ -46,7 +46,6 @@ exports.registerDoctor = async (req, res) => {
         phoneNumber, 
         email, 
         password, 
-        role,
         degree,
         professionalLicense,
         specialty,
@@ -64,7 +63,6 @@ exports.registerDoctor = async (req, res) => {
     const tempUploadDir = 'infrastructure/temp_uploads/';
     const finalUploadDir = 'infrastructure/uploads/';
 
-    const validRoles = ['doctor'];
 
     // Validación de archivos subidos
     if (req.files && req.files['profilePicture'] && req.files['profilePicture'][0]) {
@@ -79,14 +77,6 @@ exports.registerDoctor = async (req, res) => {
         authorizationFile = req.files['authorizationFile'][0].filename;
     }
 
-    // validaciones 
-    if (!validRoles.includes(role)){
-        if (profilePicture) deleteFile(path.join(tempUploadDir, profilePicture));
-        if (clinicLogo) deleteFile(path.join(tempUploadDir, clinicLogo));
-        if (authorizationFile) deleteFile(path.join(tempUploadDir, authorizationFile));
-        return res.status(400).json({ error: 'Invalid role' });
-    }
-
     if (!validGender.includes(gender)){
         if (profilePicture) deleteFile(path.join(tempUploadDir, profilePicture));
         if (clinicLogo) deleteFile(path.join(tempUploadDir, clinicLogo));
@@ -95,22 +85,22 @@ exports.registerDoctor = async (req, res) => {
     }
 
     try {
+        const role = 'doctor';
         const hashedPassword = await bcrypt.hash(password, 12);
         const newLogin = await Login.create({ name, lastName, gender, birthDate, phoneNumber, profilePicture, email, password: hashedPassword, role });
 
-        // Depende del rol
-        if (role === 'doctor') {
-            await Doctor.create({ loginId: newLogin.id, degree, professionalLicense, specialty, specialtyLicense, clinicName, clinicLogo, clinicAddress, authorizationFile });
-        }
+        
+        await Doctor.create({ loginId: newLogin.id, degree, professionalLicense, specialty, specialtyLicense, clinicName, clinicLogo, clinicAddress, authorizationFile });
+        
 
-        const token = jwt.sign({ loginId: newLogin.id, role: newLogin.role }, process.env.JWT_SECRET, { expiresIn: '1H' });
+        const token = jwt.sign({ loginId: newLogin.id, role: newLogin.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
         
         if (profilePicture) moveFile(path.join(tempUploadDir, profilePicture), path.join(finalUploadDir, profilePicture));
         if (clinicLogo) moveFile(path.join(tempUploadDir, clinicLogo), path.join(finalUploadDir, clinicLogo));
         if (authorizationFile) moveFile(path.join(tempUploadDir, authorizationFile), path.join(finalUploadDir, authorizationFile));
 
         // respuesta solo para comprobar token
-        res.status(201).json({ token, loginId: newLogin.id, role: newLogin.role });
+        res.status(201).json({ token });
     } catch (error) {
         if (profilePicture) deleteFile(path.join(tempUploadDir, profilePicture));
         if (clinicLogo) deleteFile(path.join(tempUploadDir, clinicLogo));
@@ -128,7 +118,6 @@ exports.registerPatient = async (req, res) => {
         phoneNumber, 
         email, 
         password, 
-        role,
         maritalStatus,
         occupation,
         address,
@@ -137,8 +126,6 @@ exports.registerPatient = async (req, res) => {
 
     // Manejo de archivos subidos
     let profilePicture = null;
-
-    const validRoles = ['patient'];
 
     // Rutas de directorio
     const tempUploadDir = 'infrastructure/temp_uploads/';
@@ -149,11 +136,6 @@ exports.registerPatient = async (req, res) => {
         profilePicture = req.files['profilePicture'][0].filename;
     }
 
-    // validaciones 
-    if (!validRoles.includes(role)){
-        if (profilePicture) deleteFile(path.join(tempUploadDir, profilePicture));
-        return res.status(400).json({ error: 'Invalid role' });
-    }
 
     if (!validGender.includes(gender)){
         if (profilePicture) deleteFile(path.join(tempUploadDir, profilePicture));
@@ -161,13 +143,11 @@ exports.registerPatient = async (req, res) => {
     }
 
     try {
+        const role = 'patient';
         const hashedPassword = await bcrypt.hash(password, 12);
         const newLogin = await Login.create({ name, lastName, gender, birthDate, phoneNumber, profilePicture, email, password: hashedPassword, role });
 
-        // Depende del rol
-        if (role === 'patient') {
-            await Patient.create({ loginId: newLogin.id, maritalStatus, occupation, address, origin })
-        }
+        await Patient.create({ loginId: newLogin.id, maritalStatus, occupation, address, origin })
 
         const token = jwt.sign({ loginId: newLogin.id, role: newLogin.role }, process.env.JWT_SECRET, { expiresIn: '1H' });
 
@@ -592,7 +572,7 @@ exports.login = async (req, res) => {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const token = jwt.sign({ loginId: login.id, role: login.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ loginId: login.id, role: login.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         res.status(200).json({ token, loginId: login.id, role: login.role });
     } catch (error) {
@@ -600,3 +580,45 @@ exports.login = async (req, res) => {
     }
 };
 
+exports.userInfo = async (req, res) => {
+
+    const token = req.cookies.token; // O también puedes obtenerlo del Authorization header
+
+    if (!token) {
+        return res.status(401).json({ message: 'Token no proporcionado' });
+    }
+
+    try {
+        // Verificar el token con la clave secreta
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Enviar solo la información que el frontend necesita
+        res.json({
+            role: decoded.role,
+            loginId: decoded.loginId,
+        });
+    } catch (err) {
+        res.status(403).json({ message: 'Token inválido o expirado' });
+    }
+};
+
+exports.checkEmailDoctor = async (req, res) => {
+
+    const { email } = req.body;
+
+    try {
+
+        const user = await Login.findOne({ where: { email } });
+        
+        if (user) {
+            return res.status(200).json({ exists: true }); // El correo ya está registrado
+            
+        } else {
+            res.status(200).json({ exists: false });
+        }
+
+         // El correo no está registrado
+    } catch (error) {
+        res.status(500).json({ error: "Error al verificar el correo" });
+    }
+};

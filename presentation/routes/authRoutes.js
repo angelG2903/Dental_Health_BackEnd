@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerDoctor, registerPatient, getAllPatients, getPatientById, getDoctorById, updatePatient, updateDoctor, deletePatient, deleteDoctor, login } = require('../../application/controllers/authController')
+const { registerDoctor, registerPatient, getAllPatients, getPatientById, getDoctorById, updatePatient, updateDoctor, deletePatient, deleteDoctor, login, userInfo, checkEmailDoctor } = require('../../application/controllers/authController')
 const upload = require('../../infrastructure/middlewares/multerConfig');
 
 const router = express.Router();
@@ -32,5 +32,7 @@ router.delete('/deletePatient/:id', deletePatient);
 router.delete('/deleteDoctor/:id', deleteDoctor);
 
 router.post('/login', login);
+router.get('/userInfo', userInfo);
+router.post('/checkEmailDoctor', checkEmailDoctor);
 
 module.exports = router;
