@@ -2,13 +2,18 @@ const { Op } = require('sequelize');
 const { Patient, DentalExam } = require('../../domain/models');
 
 const validationState = ['sano', 'cariado', 'obturado', 'od_perdido', 'protesis_parcial_r', 'od_reemplazado', 'protesis_fija', 'ext_indicada'];
-const validationLifeStage = ['adult','child'];
+const validationLifeStage = ['adult', 'child'];
 
 exports.create = async (req, res) => {
     const { id } = req.params;
     const dentalData = req.body; // Recibimos el objeto con los datos de los dientes
 
     try {
+
+        if (Object.keys(dentalData.dientes).length === 0) {
+            return res.status(400).json({ error: 'Invalid or empty data' });
+        }
+
         // Validamos que el paciente exista
         const validationId = await Patient.findOne({ where: { id } });
         if (!validationId) {
@@ -17,50 +22,52 @@ exports.create = async (req, res) => {
 
         // Array para almacenar los errores
         const errors = [];
-        const createdRecords = [];
+        const createPromises = [];
 
-        // Iteramos sobre los datos recibidos
-        for (const key in dentalData) {
-            if (dentalData.hasOwnProperty(key)) {
-                const { lifeStage, toothNumber, state } = dentalData[key];
+        // Iteramos sobre los valores del objeto `dentalData`
+        for (const diente of dentalData.dientes) {
+            const { lifeStage, toothNumber, state } = diente;
 
-                // Validaciones
-                if (!lifeStage || !toothNumber || !state) {
-                    errors.push({ error: 'lifeStage, toothNumber, and state are required', data: dentalData[key] });
-                    continue; // Continuamos con el siguiente registro
-                }
-
-                if (!validationState.includes(state)) {
-                    errors.push({ error: 'Invalid State', data: dentalData[key] });
-                    continue;
-                }
-
-                if (!validationLifeStage.includes(lifeStage)) {
-                    errors.push({ error: 'Invalid lifeStage', data: dentalData[key] });
-                    continue;
-                }
-
-                // Validamos que no haya un registro duplicado para el mismo diente
-                const duplicateTooth = await DentalExam.findOne({
-                    where: {
-                        patientId: id,
-                        toothNumber
-                    }
-                });
-
-                if (duplicateTooth) {
-                    errors.push({ error: 'Tooth number already exists for this patient', data: dentalData[key] });
-                    continue;
-                }
-
-                // Creamos el registro si todas las validaciones pasan
-                const newRecord = await DentalExam.create({ patientId: id, lifeStage, toothNumber, state });
-                createdRecords.push(newRecord);
+            // Validaciones
+            if (!Object.values(dentalData.dientes).every(value => !!value)) {
+                errors.push({ error: 'lifeStage, toothNumber, and state are required', data: dentalData[diente] });
+                continue;
             }
+
+            if (!validationState.includes(state)) {
+                console.log(state)
+                errors.push({ error: 'Invalid State', data: dentalData[diente] });
+                continue;
+            }
+
+            if (!validationLifeStage.includes(lifeStage)) {
+                errors.push({ error: 'Invalid lifeStage', data: dentalData[diente] });
+                continue;
+            }
+
+            // Validamos que no haya un registro duplicado para el mismo diente
+            const duplicateTooth = await DentalExam.findOne({
+                where: {
+                    patientId: id,
+                    toothNumber
+                }
+            });
+
+            if (duplicateTooth) {
+                errors.push({ error: 'Tooth number already exists for this patient', data: diente });
+                continue;
+            }
+
+            // Creamos el registro si todas las validaciones pasan
+            createPromises.push(DentalExam.create({ patientId: id, lifeStage, toothNumber, state }));
         }
+
+        // Ejecutamos todas las promesas de creación de registros
+        const createdRecords = await Promise.all(createPromises);
 
         // Si hubo errores, los devolvemos junto con los registros creados exitosamente
         if (errors.length > 0) {
+            console.log(req.body);
             return res.status(400).json({
                 message: 'Some records could not be processed',
                 createdRecords,
@@ -68,11 +75,13 @@ exports.create = async (req, res) => {
             });
         }
 
+
         // Si todo salió bien, devolvemos los registros creados
         res.status(201).json({ createdRecords });
 
     } catch (error) {
         res.status(500).json({ error: 'server error', details: error.message });
+        console.error('Error en el servidor:', error);
     }
 }
 
