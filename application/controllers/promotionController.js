@@ -77,7 +77,9 @@ exports.getAllPromotions = async (req, res) => {
         });
 
         // Construir la URL completa para cada imagen de promoción
-        const baseUrl = req.protocol + '://' + req.get('host'); // http://localhost:3000
+        // const baseUrl = req.protocol + '://' + req.get('host');
+
+        const baseUrl = req.protocol + '://' + '192.168.100.4:5000'; // http://localhost:3000
         const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
 
         const promotionsWithImageUrls = promotions.map(promotion => {
