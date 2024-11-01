@@ -31,7 +31,7 @@ router.put('/updateDoctor/:id', upload.fields([
 router.delete('/deletePatient/:id', deletePatient);
 router.delete('/deleteDoctor/:id', deleteDoctor);
 
-router.post('/login', login);
+router.post('/login',upload.none(), login);
 router.get('/userInfo', userInfo);
 router.post('/checkEmailDoctor', checkEmailDoctor);
 
