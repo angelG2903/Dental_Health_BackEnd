@@ -10,6 +10,7 @@ const Promotion = require('./Promotion');
 const DentalExam = require('./DentalExam');
 const Appointment = require('./Appointment');
 const Message = require('./Message');
+const Notification = require('./Notification');
 
 module.exports = {
     Login,
@@ -24,4 +25,5 @@ module.exports = {
     DentalExam,
     Appointment,
     Message,
+    Notification,
 };

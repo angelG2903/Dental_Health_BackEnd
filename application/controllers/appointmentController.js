@@ -1,4 +1,9 @@
-const { Patient, Appointment, Login } = require('../../domain/models');
+const { Patient, Appointment, Login, Notification } = require('../../domain/models');
+const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
+const today = new Date();
+const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
 exports.register = async (req, res) => {
     const { id } = req.params;
@@ -55,9 +60,9 @@ exports.register = async (req, res) => {
             }
         });
 
-        if (duplicateAppointment) {
+        /* if (duplicateAppointment) {
             return res.status(400).json({ error: 'Appointment already exists for this patient' });
-        }
+        } */
 
         const newAppointment = await Appointment.create({ patientId: id, date, time });
 
@@ -69,18 +74,55 @@ exports.register = async (req, res) => {
 
         // falta meter la informacion de cuando fue su ultima cita si es que tuvo :D
 
+        const notification = await Notification.create({
+            patientId: id,
+            appointmentId: newAppointment.id
+        });
         // notification
         const io = req.app.get('io');
-        io.emit('newAppointment',{
-            patientName,
-            date,
-            time
-        });
 
-        res.status(201).json({ patientId: id, date, time });
+        io.emit('newNotification', { message: 'Nueva cita solicitada' });
+
+        res.status(201).json({ newAppointment, notification });
 
     } catch (error) {
         res.status(500).json({ error: 'server error', details: error.message });
+    }
+}
+
+exports.getAppointments = async (req, res) => {
+
+    const token = req.cookies.token || req.headers['authorization'];
+
+    if (!token) {
+        return res.status(401).json({ message: 'Token no proporcionado' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const appointment = await Appointment.findAll({
+            where: { 
+                date:{ [Op.between]: [startOfDay, endOfDay] } 
+            },
+            include: {
+                model: Patient,
+                attributes: ['id'],
+                include: {
+                    model: Login,
+                    attributes: ['name']
+                },
+            },
+            order: [['time', 'ASC']]
+        });
+
+        res.status(200).json(appointment);
+
+    } catch (error) {
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(403).json({ message: 'Token inválido' });
+        }
+        res.status(500).json({ error: 'Server error', details: error.message });
     }
 }
 

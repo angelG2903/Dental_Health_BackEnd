@@ -238,11 +238,19 @@ exports.getPatientById = async (req, res) => {
 
 
 exports.getDoctorById = async (req, res) => {
-    const { id } = req.params; // Obtener el ID del doctor desde los parámetros de la solicitud
+    
+    const token = req.cookies.token || req.headers['authorization']; // O también puedes obtenerlo del Authorization header
+
+    if (!token) {
+        return res.status(401).json({ message: 'Token no proporcionado' });
+    }
 
     try {
+        // Verificar el token con la clave secreta
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
         const doctor = await Doctor.findOne({
-            where: { id }, // Buscar el doctor por ID
+            where: { loginId: decoded.loginId }, // Buscar el doctor por ID
             include: [{
                 model: Login,
                 attributes: ['name', 'lastName', 'gender', 'birthDate', 'phoneNumber', 'email', 'profilePicture']
@@ -255,7 +263,8 @@ exports.getDoctorById = async (req, res) => {
         }
 
         // Construir la URL base para las imágenes
-        const baseUrl = req.protocol + '://' + req.get('host'); // Ejemplo: http://localhost:3000
+        // const baseUrl = req.protocol + '://' + req.get('host');
+        const baseUrl = req.protocol + '://' + '192.168.100.4:5000'; // Ejemplo: http://localhost:5000
         const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
 
         // Convertir el doctor encontrado en un objeto plano de JavaScript
@@ -285,7 +294,12 @@ exports.getDoctorById = async (req, res) => {
         };
 
         res.status(200).json(doctorWithImageUrls);
+
     } catch (error) {
+        // Manejo de errores
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(403).json({ message: 'Token inválido' });
+        }
         res.status(500).json({ error: 'Server error', details: error.message });
     }
 };

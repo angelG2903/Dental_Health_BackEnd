@@ -16,7 +16,7 @@ router.post('/registerPatient', upload.fields([
 
 router.get('/getPatient', getAllPatients);
 router.get('/getPatient/:id', getPatientById);
-router.get('/getDoctor/:id', getDoctorById);
+router.get('/getDoctor', getDoctorById);
 
 router.put('/updatePatient/:id', upload.fields([
     { name: 'profilePicture' }

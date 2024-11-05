@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { connectDB } = require('./persistence/config/db');
 const { swaggerUi, specs } = require('./persistence/config/swagger');
-const { authRoutes, medicalFormRoutes, promotionRoutes, dentalExamRoutes, appointmentRoutes, messageRoutes } = require('./presentation/routes');
+const { authRoutes, medicalFormRoutes, promotionRoutes, dentalExamRoutes, appointmentRoutes, messageRoutes, notificationRoutes } = require('./presentation/routes');
 const cronJobs = require('./infrastructure/utils/cronJobs');
 const cookieParser = require('cookie-parser'); 
 
@@ -38,6 +38,7 @@ app.use('/api/promotion', promotionRoutes);
 app.use('/api/dentalExam', dentalExamRoutes);
 app.use('/api/appointment', appointmentRoutes);
 app.use('/api/message', messageRoutes);
+app.use('/api/notification', notificationRoutes);
 
 
 // Middleware de errores
