@@ -27,3 +27,11 @@ Thumbs.db
 dist/
 build/
 coverage/
+
+# Files
+uploads/
+temp_uploads/
+
+# directories files
+!uploads/.gitkeep
+!temp_uploads/.gitkeep
