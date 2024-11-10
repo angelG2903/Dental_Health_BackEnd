@@ -1,6 +1,6 @@
 const { Op } = require('sequelize');
 
-const { Patient, MedicalHistory, CardiovascularSystem, EtsDisease, PathologicalHistory, OralCavity } = require('../../domain/models');
+const { Login, Patient, MedicalHistory, CardiovascularSystem, EtsDisease, PathologicalHistory, OralCavity } = require('../../domain/models');
 
 
 exports.register = async (req, res) => {
@@ -19,42 +19,40 @@ exports.register = async (req, res) => {
     try {
 
         const valitedId = await Patient.findOne({ where: { id } })
-        const existingMedicalHistory = await MedicalHistory.findOne({ where: { patientId: id } });
+        
         if (!valitedId) {
             return res.status(404).json({ error: 'Patient not found' });
-        } else if (existingMedicalHistory) {
-            return res.status(409).json({ error: 'Duplicate data found' });
-        }
+        } 
 
 
-        await MedicalHistory.create({ patientId: valitedId.id, weight, size, tA, fC, fR, t, history1, history2, history3, history4, history5, history6, history7, history8 });
+        const medicalHistoryId = await MedicalHistory.create({ patientId: valitedId.id, weight, size, tA, fC, fR, t, history1, history2, history3, history4, history5, history6, history7, history8 });
 
         // validar si hay datos en cardiovascular
         const hasCardiovascularData = [cardiovascular1, cardiovascular2, cardiovascular3, cardiovascular4, cardiovascular5, cardiovascular6].some(value => value !== null && value !== undefined && value !== '');
         if (hasCardiovascularData) {
-            await CardiovascularSystem.create({ patientId: valitedId.id, cardiovascular1, cardiovascular2, cardiovascular3, cardiovascular4, cardiovascular5, cardiovascular6 });
+            await CardiovascularSystem.create({ medicalId: medicalHistoryId.id, cardiovascular1, cardiovascular2, cardiovascular3, cardiovascular4, cardiovascular5, cardiovascular6 });
         }
 
         // validar si hay datos en ETS
         const hasEtsDiseaseData = [disease1, disease2, disease3, disease4].some(value => value !== null && value !== undefined && value !== '');
         if (hasEtsDiseaseData) {
-            await EtsDisease.create({ patientId: valitedId.id, disease1, disease2, disease3, disease4 });
+            await EtsDisease.create({ medicalId: medicalHistoryId.id, disease1, disease2, disease3, disease4 });
         }
 
         // validar si hay datos en PathologicalHistory
         const hasPathologicalHistoryData = [colitis, gastritis, gastroenteritis, asma, bronquitis, neumonia, tuberculosis, farinoamigdalitis, pathological1, pathological2, pathological3, pathological4, pathological5, pathological6, pathological7].some(value => value !== null && value !== undefined && value !== '');
         if (hasPathologicalHistoryData) {
-            await PathologicalHistory.create({  patientId: valitedId.id, colitis, gastritis, gastroenteritis, asma, bronquitis, neumonia, tuberculosis, farinoamigdalitis, pathological1, pathological2, pathological3, pathological4, pathological5, pathological6, pathological7 });
+            await PathologicalHistory.create({  medicalId: medicalHistoryId.id, colitis, gastritis, gastroenteritis, asma, bronquitis, neumonia, tuberculosis, farinoamigdalitis, pathological1, pathological2, pathological3, pathological4, pathological5, pathological6, pathological7 });
         }
 
         // validar si hay datos en OralCavity
         const hasOralCavityData = [cavity1, cavity2, cavity3, dolor, luxacion, anquilosis, crepitacion, subluxacion, espasmoMuscular].some(value => value !== null && value !== undefined && value !== '');
         if (hasOralCavityData) {
-            await OralCavity.create({ patientId: valitedId.id, cavity1, cavity2, cavity3, dolor, luxacion, anquilosis, crepitacion, subluxacion, espasmoMuscular });
+            await OralCavity.create({ medicalId: medicalHistoryId.id, cavity1, cavity2, cavity3, dolor, luxacion, anquilosis, crepitacion, subluxacion, espasmoMuscular });
         }
 
 
-        res.status(201).json({ weight, patientId: valitedId.id });
+        res.status(201).json({ weight, medicalId: medicalHistoryId.id });
 
     } catch (error) {
         res.status(500).json({ error: 'server error', details: error.message });
@@ -83,37 +81,37 @@ exports.update = async (req, res) => {
 
         // valida Cardiovascular
         const hasCardiovascularData = [cardiovascular1, cardiovascular2, cardiovascular3, cardiovascular4, cardiovascular5, cardiovascular6].some(value => value !== null && value !== undefined && value !== '');
-        const existingCardio = await CardiovascularSystem.findOne({ where: { patientId: id } });
+        const existingCardio = await CardiovascularSystem.findOne({ where: { medicalId: medicalHis.id } });
         if (existingCardio) {
-            await CardiovascularSystem.update({ cardiovascular1, cardiovascular2, cardiovascular3, cardiovascular4, cardiovascular5, cardiovascular6 }, { where: { patientId: id } });
+            await CardiovascularSystem.update({ cardiovascular1, cardiovascular2, cardiovascular3, cardiovascular4, cardiovascular5, cardiovascular6 }, { where: { medicalId: medicalHis.id } });
         } else if (hasCardiovascularData) {
-            await CardiovascularSystem.create({ patientId: id, cardiovascular1, cardiovascular2, cardiovascular3, cardiovascular4, cardiovascular5, cardiovascular6 });
+            await CardiovascularSystem.create({ medicalId: medicalHis.id, cardiovascular1, cardiovascular2, cardiovascular3, cardiovascular4, cardiovascular5, cardiovascular6 });
         }
 
         // valida ETS
         const hasEtsDiseaseData = [disease1, disease2, disease3, disease4].some(value => value !== null && value !== undefined && value !== '');
-        const existingEts = await EtsDisease.findOne({ where: { patientId: id } });
+        const existingEts = await EtsDisease.findOne({ where: { medicalId: medicalHis.id } });
         if (existingEts) {
-            await EtsDisease.update({ disease1, disease2, disease3, disease4 }, { where: { patientId: id } });
+            await EtsDisease.update({ disease1, disease2, disease3, disease4 }, { where: { medicalId: medicalHis.id } });
         } else if (hasEtsDiseaseData){
-            await EtsDisease.create({ patientId: id, disease1, disease2, disease3, disease4 });
+            await EtsDisease.create({ medicalId: medicalHis.id, disease1, disease2, disease3, disease4 });
         }
 
         // validar PathologicalHistory
         const hasPathologicalHistoryData = [colitis, gastritis, gastroenteritis, asma, bronquitis, neumonia, tuberculosis, farinoamigdalitis, pathological1, pathological2, pathological3, pathological4, pathological5, pathological6, pathological7].some(value => value !== null && value !== undefined && value !== '');
-        const existingPathological = await PathologicalHistory.findOne({ where: { patientId: id } });
+        const existingPathological = await PathologicalHistory.findOne({ where: { medicalId: medicalHis.id } });
         if (existingPathological) {
-            await PathologicalHistory.update({ colitis, gastritis, gastroenteritis, asma, bronquitis, neumonia, tuberculosis, farinoamigdalitis, pathological1, pathological2, pathological3, pathological4, pathological5, pathological6, pathological7 }, { where: { patientId: id } });
+            await PathologicalHistory.update({ colitis, gastritis, gastroenteritis, asma, bronquitis, neumonia, tuberculosis, farinoamigdalitis, pathological1, pathological2, pathological3, pathological4, pathological5, pathological6, pathological7 }, { where: { medicalId: medicalHis.id } });
         } else if (hasPathologicalHistoryData) {
-            await PathologicalHistory.create({  patientId: id, colitis, gastritis, gastroenteritis, asma, bronquitis, neumonia, tuberculosis, farinoamigdalitis, pathological1, pathological2, pathological3, pathological4, pathological5, pathological6, pathological7 });
+            await PathologicalHistory.create({  medicalId: medicalHis.id, colitis, gastritis, gastroenteritis, asma, bronquitis, neumonia, tuberculosis, farinoamigdalitis, pathological1, pathological2, pathological3, pathological4, pathological5, pathological6, pathological7 });
         }
 
         const hasOralCavityData = [cavity1, cavity2, cavity3, dolor, luxacion, anquilosis, crepitacion, subluxacion, espasmoMuscular].some(value => value !== null && value !== undefined && value !== '');
-        const existingOralCavity = await OralCavity.findOne({ where: { patientId: id } });
+        const existingOralCavity = await OralCavity.findOne({ where: { medicalId: medicalHis.id } });
         if (existingOralCavity) {
-            await OralCavity.update({ cavity1, cavity2, cavity3, dolor, luxacion, anquilosis, crepitacion, subluxacion, espasmoMuscular }, { where: { patientId: id } });
+            await OralCavity.update({ cavity1, cavity2, cavity3, dolor, luxacion, anquilosis, crepitacion, subluxacion, espasmoMuscular }, { where: { medicalId: medicalHis.id } });
         } else if (hasOralCavityData) {
-            await OralCavity.create({ patientId: id, cavity1, cavity2, cavity3, dolor, luxacion, anquilosis, crepitacion, subluxacion, espasmoMuscular });
+            await OralCavity.create({ medicalId: medicalHis.id, cavity1, cavity2, cavity3, dolor, luxacion, anquilosis, crepitacion, subluxacion, espasmoMuscular });
         }
 
         res.status(200).json({ message: 'Medical record updated successfully' });
@@ -124,27 +122,30 @@ exports.update = async (req, res) => {
 };
 
 exports.getAllMedicalForm = async (req, res) => {
+
+    const { id } = req.params;
+
     try {
-        const patients = await Patient.findAll({
+
+        const medicalHistoryData = await MedicalHistory.findAll({
+            where: {patientId: id},
             include: [
                 {
-                    model: MedicalHistory,
-                    where: {
-                        id: { [Op.ne]: null }
-                    },
-                }, 
-                CardiovascularSystem, 
-                EtsDisease, 
-                PathologicalHistory, 
-                OralCavity
+                    model: Patient,
+                    include: {
+                        model:Login
+                    }
+                }
+                
+            
             ]
-        });
+        })
 
-        if (patients.length === 0) {
+        if (medicalHistoryData.length === 0) {
             return res.status(404).json({ error: 'No medical records found' });
         }
 
-        res.status(200).json(patients);
+        res.status(200).json(medicalHistoryData);
     } catch (error) {
         res.status(500).json({ error: 'Server error', details: error.message });
     }
