@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Patient, DentalExam } = require('../../domain/models');
+const { Patient, Login, DentalExam, Teeth } = require('../../domain/models');
 
 const validationState = ['sano', 'cariado', 'obturado', 'od_perdido', 'protesis_parcial_r', 'od_reemplazado', 'protesis_fija', 'ext_indicada'];
 const validationLifeStage = ['adult', 'child'];
@@ -19,6 +19,9 @@ exports.create = async (req, res) => {
         if (!validationId) {
             return res.status(404).json({ error: 'Patient not found' });
         }
+
+        // Creamos el expediente dental
+        const dentalExam = await DentalExam.create({ patientId: id });
 
         // Array para almacenar los errores
         const errors = [];
@@ -45,21 +48,14 @@ exports.create = async (req, res) => {
                 continue;
             }
 
-            // Validamos que no haya un registro duplicado para el mismo diente
-            const duplicateTooth = await DentalExam.findOne({
-                where: {
-                    patientId: id,
-                    toothNumber
-                }
-            });
-
-            if (duplicateTooth) {
-                errors.push({ error: 'Tooth number already exists for this patient', data: diente });
-                continue;
-            }
-
             // Creamos el registro si todas las validaciones pasan
-            createPromises.push(DentalExam.create({ patientId: id, lifeStage, toothNumber, state }));
+            createPromises.push(
+                Teeth.create({ 
+                    dentalExamId: dentalExam.id, 
+                    lifeStage, 
+                    toothNumber, 
+                    state 
+                }));
         }
 
         // Ejecutamos todas las promesas de creación de registros
@@ -97,10 +93,41 @@ exports.getAllDentalExams = async (req, res) => {
         }
 
         const dentalExams = await DentalExam.findAll({
-            where: { patientId: id }
+            where: { patientId: id },
+            include: [
+                {
+                    model: Patient,
+                    include: {
+                        model:Login
+                    }
+                }
+                
+            
+            ]
         });
 
         res.status(200).json(dentalExams);
+    } catch (error) {
+        res.status(500).json({ error: 'server error', details: error.message });
+    }
+};
+
+exports.getAllDentalExamsById = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // Validamos que exista el id del DentalExam 
+        const validationId = await DentalExam.findOne({ where: { id } });
+
+        if (!validationId) {
+            return res.status(404).json({ error: 'DentalExam not found' });
+        }
+
+        const dentalExam = await Teeth.findAll({
+            where: { dentalExamId: id }
+        });
+
+        res.status(200).json(dentalExam);
     } catch (error) {
         res.status(500).json({ error: 'server error', details: error.message });
     }
@@ -196,35 +223,19 @@ exports.updateDentalExam = async (req, res) => {
 
 
 exports.deleteDentalExam = async (req, res) => {
-    const { id, examId } = req.params;
+    const { id } = req.params;
 
     try {
-        // Validamos que exista el id del Patient
-        const validationId = await Patient.findOne({ where: { id } });
-
-        if (!validationId) {
-            return res.status(404).json({ error: 'Patient not found' });
+        const medical = await DentalExam.findOne({ where: { id } });
+        if (!medical) {
+            return res.status(404).json({ error: 'Dental Exam not found' });
         }
 
-        const dentalExam = await DentalExam.findOne({
-            where: {
-                patientId: id,
-                id: examId
-            }
-        });
+        await DentalExam.destroy({ where: { id } });
+        await Teeth.destroy({ where: { dentalExamId: id  } });
 
-        if (!dentalExam) {
-            return res.status(404).json({ error: 'Dental exam not found' });
-        }
+        res.status(200).json({ message: 'Dental Exam deleted successfully' });
 
-        await DentalExam.destroy({
-            where: {
-                id: examId,
-                patientId: id
-            }
-        });
-
-        res.status(200).json({ message: 'Dental exam deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: 'server error', details: error.message });
     }

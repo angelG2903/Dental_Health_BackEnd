@@ -15,18 +15,6 @@ const DentalExam = sequelize.define('DentalExam', {
             model: Patient,
             key: 'id'
         },
-    },
-    lifeStage: {
-        type: DataTypes.ENUM('adult','child'),
-        allowNull: false,
-    },
-    toothNumber: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    state: {
-        type: DataTypes.STRING,
-        allowNull: false,
     }
 
 });
