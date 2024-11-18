@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../persistence/config/db');
-const Patient = require('./Patient');
+const MedicalHistory = require('./MedicalHistory');
 
 const CardiovascularSystem = sequelize.define('CardiovascularSystem', {
     id: {
@@ -8,11 +8,11 @@ const CardiovascularSystem = sequelize.define('CardiovascularSystem', {
         primaryKey: true,
         autoIncrement: true,
     },
-    patientId: {
+    medicalId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: Patient,
+            model: MedicalHistory,
             key: 'id'
         },
     },
@@ -43,7 +43,7 @@ const CardiovascularSystem = sequelize.define('CardiovascularSystem', {
 
 });
 
-Patient.hasMany(CardiovascularSystem, { foreignKey: 'patientId', onDelete: 'CASCADE' });
-CardiovascularSystem.belongsTo(Patient, { foreignKey: 'patientId', onDelete: 'CASCADE' });
+MedicalHistory.hasMany(CardiovascularSystem, { foreignKey: 'medicalId', onDelete: 'CASCADE' });
+CardiovascularSystem.belongsTo(MedicalHistory, { foreignKey: 'medicalId', onDelete: 'CASCADE' });
 
 module.exports = CardiovascularSystem;

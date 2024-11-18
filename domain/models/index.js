@@ -11,6 +11,7 @@ const DentalExam = require('./DentalExam');
 const Appointment = require('./Appointment');
 const Message = require('./Message');
 const Notification = require('./Notification');
+const Teeth = require('./Teeth');
 
 module.exports = {
     Login,
@@ -26,4 +27,5 @@ module.exports = {
     Appointment,
     Message,
     Notification,
+    Teeth,
 };
