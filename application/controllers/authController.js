@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { where } = require('sequelize');
 
 // Función para mover archivos de la carpeta temporal a la carpeta final
 function moveFile(tempPath, finalPath) {
@@ -33,7 +34,6 @@ function deleteFile(filePath) {
         }
     }
 }
-
 
 const validGender = ['femenino', 'masculino'];
 
@@ -89,9 +89,16 @@ exports.registerDoctor = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 12);
         const newLogin = await Login.create({ name, lastName, gender, birthDate, phoneNumber, profilePicture, email, password: hashedPassword, role });
 
-        
-        await Doctor.create({ loginId: newLogin.id, degree, professionalLicense, specialty, specialtyLicense, clinicName, clinicLogo, clinicAddress, authorizationFile });
-        
+        // New function
+        const newDoctor = await Doctor.create({ loginId: newLogin.id, degree, professionalLicense, specialty, specialtyLicense, clinicName, clinicLogo, clinicAddress, authorizationFile });
+        if (newDoctor.id === null) {
+            const doct = await Login.findOne({ 
+                where: { id: newLogin.id }
+             })
+            await doct.destroy();
+            return res.status(400).json({ error: 'Error al crear registro del doctor' });
+        }
+        // end function
 
         const token = jwt.sign({ loginId: newLogin.id, role: newLogin.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
         
