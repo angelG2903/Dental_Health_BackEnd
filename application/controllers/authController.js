@@ -54,6 +54,7 @@ exports.registerDoctor = async (req, res) => {
         clinicAddress
     } = req.body;
 
+    //  "password": "SecurePassword123!",
     // Manejo de archivos subidos
     let profilePicture = null;
     let clinicLogo = null;
