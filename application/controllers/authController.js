@@ -271,7 +271,7 @@ exports.getDoctorById = async (req, res) => {
         }
 
         // Construir la URL base para las imágenes
-        const baseUrl = req.protocol + '://' + req.get('host');
+        const baseUrl = 'https' + '://' + req.get('host');
         // const baseUrl = req.protocol + '://' + '192.168.100.4:5000';
         const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
 
