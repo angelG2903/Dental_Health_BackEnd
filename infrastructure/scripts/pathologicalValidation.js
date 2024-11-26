@@ -7,14 +7,14 @@ async function checkAndDeleteEmptyPathologicalHistory() {
         const emptyRecords = await PathologicalHistory.findAll({
             where: {
                 [Op.and]: [
-                    { colitis: { [Op.or]: [null, ''] } },
-                    { gastritis: { [Op.or]: [null, ''] } },
-                    { gastroenteritis: { [Op.or]: [null, ''] } },
-                    { asma: { [Op.or]: [null, ''] } },
-                    { bronquitis: { [Op.or]: [null, ''] } },
-                    { neumonia: { [Op.or]: [null, ''] } },
-                    { tuberculosis: { [Op.or]: [null, ''] } },
-                    { farinoamigdalitis: { [Op.or]: [null, ''] } },
+                    { colitis: { [Op.or]: [null, '', 0] } },
+                    { gastritis: { [Op.or]: [null, '', 0] } },
+                    { gastroenteritis: { [Op.or]: [null, '', 0] } },
+                    { asma: { [Op.or]: [null, '', 0] } },
+                    { bronquitis: { [Op.or]: [null, '', 0] } },
+                    { neumonia: { [Op.or]: [null, '', 0] } },
+                    { tuberculosis: { [Op.or]: [null, '', 0] } },
+                    { farinoamigdalitis: { [Op.or]: [null, '', 0] } },
                     { pathological1: { [Op.or]: [null, ''] } },
                     { pathological2: { [Op.or]: [null, ''] } },
                     { pathological3: { [Op.or]: [null, ''] } },

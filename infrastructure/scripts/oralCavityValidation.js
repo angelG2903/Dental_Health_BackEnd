@@ -10,12 +10,12 @@ async function checkAndDeleteEmptyOralCavity() {
                     { cavity1: { [Op.or]: [null, ''] } },
                     { cavity2: { [Op.or]: [null, ''] } },
                     { cavity3: { [Op.or]: [null, ''] } },
-                    { dolor: { [Op.or]: [null, ''] } },
-                    { luxacion: { [Op.or]: [null, ''] } },
-                    { anquilosis: { [Op.or]: [null, ''] } },
-                    { crepitacion: { [Op.or]: [null, ''] } },
-                    { subluxacion: { [Op.or]: [null, ''] } },
-                    { espasmoMuscular: { [Op.or]: [null, ''] } },
+                    { dolor: { [Op.or]: [null, '', 0] } },
+                    { luxacion: { [Op.or]: [null, '', 0] } },
+                    { anquilosis: { [Op.or]: [null, '', 0] } },
+                    { crepitacion: { [Op.or]: [null, '', 0] } },
+                    { subluxacion: { [Op.or]: [null, '', 0] } },
+                    { espasmoMuscular: { [Op.or]: [null, '', 0] } },
                     // Agrega más condiciones para otros campos relevantes
                 ]
             }

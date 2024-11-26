@@ -271,8 +271,66 @@ exports.getDoctorById = async (req, res) => {
         }
 
         // Construir la URL base para las imágenes
-        const baseUrl = 'https' + '://' + req.get('host');
-        // const baseUrl = req.protocol + '://' + '192.168.100.4:5000';
+        // const baseUrl = 'https' + '://' + req.get('host');
+        const baseUrl = req.protocol + '://' + '192.168.100.23:5000';
+        const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
+
+        // Convertir el doctor encontrado en un objeto plano de JavaScript
+        const doctorData = doctor.toJSON();
+
+        // Verificar si existe 'profilePicture' en el objeto 'Login' relacionado
+        const profilePictureUrl = doctorData.Login && doctorData.Login.profilePicture 
+            ? `${baseUrl}/${imageDirectory}${doctorData.Login.profilePicture}` 
+            : null;
+
+        // Verificar si existe 'clinicLogo' en el objeto 'Doctor'
+        const clinicLogoUrl = doctorData.clinicLogo 
+            ? `${baseUrl}/${imageDirectory}${doctorData.clinicLogo}` 
+            : null;
+
+        // Verificar si existe 'authorizationFile' en el objeto 'Doctor'
+        const authorizationFileUrl = doctorData.authorizationFile 
+            ? `${baseUrl}/${imageDirectory}${doctorData.authorizationFile}` 
+            : null;
+
+        // Crear el objeto de respuesta con las URL de las imágenes
+        const doctorWithImageUrls = {
+            ...doctorData,
+            profilePictureUrl,   
+            clinicLogoUrl,       
+            authorizationFileUrl
+        };
+
+        res.status(200).json(doctorWithImageUrls);
+
+    } catch (error) {
+        // Manejo de errores
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(403).json({ message: 'Token inválido' });
+        }
+        res.status(500).json({ error: 'Server error', details: error.message });
+    }
+};
+
+exports.getDoctorByIdReal = async (req, res) => {
+    
+    const { id } = req.params;
+
+    try {
+
+        const doctor = await Doctor.findOne({
+            where: { id },
+            include: [Login]
+        });
+
+        // Verificar si se encontró el doctor
+        if (!doctor) {
+            return res.status(404).json({ error: 'Doctor not found' });
+        }
+
+        // Construir la URL base para las imágenes
+        // const baseUrl = 'https' + '://' + req.get('host');
+        const baseUrl = req.protocol + '://' + '192.168.100.23:5000';
         const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
 
         // Convertir el doctor encontrado en un objeto plano de JavaScript
