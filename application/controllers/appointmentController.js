@@ -12,7 +12,7 @@ exports.register = async (req, res) => {
 
     try {
 
-        const validationId = await Patient.findOne({ 
+        const validationId = await Patient.findOne({
             where: { id }
         });
 
@@ -38,14 +38,14 @@ exports.register = async (req, res) => {
 
         // Verificar que la hora esté dentro del rango permitido
         if (appointmentTime < startTime || appointmentTime >= endTime) {
-            return res.status(400).json({ error: 'Appointment time must be between 9:00 AM and 5:00 PM' });
+            return res.status(400).json({ error: 'Appointment time must be between 9:00 AM and 6:00 PM' });
         }
 
         // Verificar que no haya un conflicto de horario (misma hora)
         const conflictAppointment = await Appointment.findOne({
             where: {
-               date,
-               time
+                date,
+                time
             }
         });
 
@@ -66,7 +66,7 @@ exports.register = async (req, res) => {
 
         const newAppointment = await Appointment.create({ patientId: id, date, time });
 
-        const patientNameResult = await Login.findOne({ 
+        const patientNameResult = await Login.findOne({
             where: { id: validationId.loginId },
             attributes: ['name']
         });
@@ -102,8 +102,8 @@ exports.getAppointments = async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         const appointment = await Appointment.findAll({
-            where: { 
-                date:{ [Op.between]: [startOfDay, endOfDay] } 
+            where: {
+                date: { [Op.between]: [startOfDay, endOfDay] }
             },
             include: {
                 model: Patient,
@@ -127,12 +127,12 @@ exports.getAppointments = async (req, res) => {
 }
 
 exports.aceptApp = async (req, res) => {
-    
+
     const { id } = req.params;
 
     try {
 
-        const appointment  = await Appointment.findOne({ where: { id, status: "pendiente" } });
+        const appointment = await Appointment.findOne({ where: { id, status: "pendiente" } });
         if (!appointment) {
             return res.status(404).json({ error: 'Appointment  not found' });
         }
@@ -153,12 +153,12 @@ exports.aceptApp = async (req, res) => {
 
 // hay que ver si la dejamos como status cancelada o mejor se elimina
 exports.cancelApp = async (req, res) => {
-    
+
     const { id } = req.params;
 
     try {
 
-        const appointment  = await Appointment.findOne({ where: { id, status: "pendiente" } });
+        const appointment = await Appointment.findOne({ where: { id, status: "pendiente" } });
         if (!appointment) {
             return res.status(404).json({ error: 'Appointment  not found' });
         }
@@ -177,3 +177,45 @@ exports.cancelApp = async (req, res) => {
 
 }
 
+exports.availableHours = async (req, res) => {
+
+    // Horario permitido (personaliza aquí)
+    const startHour = 9; // 9:00 AM
+    const endHour = 17; // 5:00 PM
+
+
+    try {
+        const { date } = req.body;
+
+        // Validar formato de fecha (YYYY-MM-DD)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return res.status(400).json({ error: 'Formato de fecha inválido. Usa YYYY-MM-DD.' });
+        }
+
+        // Todas las horas dentro del rango permitido
+        const availableHours = [];
+        for (let hour = startHour; hour <= endHour; hour++) {
+            availableHours.push(`${hour.toString().padStart(2, '0')}:00:00`);
+        }
+
+        // Horas ya ocupadas en la tabla `appointment`
+        const appointments = await Appointment.findAll({
+            where: {
+                date,
+                time: {
+                    [Op.in]: availableHours, // Solo chequea horas dentro del rango permitido
+                },
+            },
+            attributes: ['time'],
+        });
+
+        // Filtra las horas disponibles
+        const occupiedHours = appointments.map((a) => a.time);
+        const freeHours = availableHours.filter((hour) => !occupiedHours.includes(hour));
+
+        res.json({ date, freeHours });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener las horas disponibles' });
+    }
+}
