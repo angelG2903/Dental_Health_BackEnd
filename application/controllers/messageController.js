@@ -16,15 +16,21 @@ exports.saveMessage = async (req, res) => {
   
 // Función para recuperar mensajes de la base de datos
 exports.getMessages = async (req, res) => {
-    const { userId } = req.query;
+    const { userId, otherUserId } = req.params;
 
     try {
         const messages = await Message.findAll({
             where: {
-                [Op.or]: [{ senderId: userId }, { receiverId: userId }],
+                [Op.or]: [
+                    { senderId: userId, receiverId: otherUserId },
+                    { senderId: otherUserId, receiverId: userId },
+                ],
             },
-            order: [['createdAt', 'ASC']],
+            order: [['createdAt', 'ASC']], // Ordena por fecha
         });
+
+        if (!messages) return res.status(404).json({ error: 'Mensajes no encontrados' });
+        
 
         res.json(messages);
     } catch (error) {

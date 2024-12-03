@@ -14,18 +14,58 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: 'http://localhost:3000',
         methods: ['GET', 'POST']
     }
 });
+
+const userSockets = {};
 
 // Manejar eventos de conexión de Socket.IO
 io.on('connection', (socket) => {
     console.log('Nuevo cliente conectado', socket.id);
 
+    // Escuchar cuando el cliente envía su identificador único (userId)
+    socket.on('register', (userId) => {
+        userSockets[userId] = socket.id; // Asociar userId con socket.id
+        console.log(`Usuario registrado: ${userId} => ${socket.id}`);
+    });
+
+    // Escuchar un mensaje dirigido
+    socket.on('send_private_message', async (data) => {
+        const { fromUserId, toUserId, message } = data;
+
+        // Guardar el mensaje en la base de datos
+        try {
+            const newMessage = await Message.create({
+                senderId: fromUserId,
+                receiverId: toUserId,
+                message: message,
+            });
+
+            // Enviar mensaje al destinatario si está conectado
+            const targetSocketId = userSockets[toUserId];
+            if (targetSocketId) {
+                io.to(targetSocketId).emit('receive_private_message', {
+                    message: newMessage.message,
+                    fromUserId: newMessage.senderId,
+                    toUserId: newMessage.receiverId,
+                });
+            }
+        } catch (error) {
+            console.error('Error al guardar el mensaje:', error);
+        }
+    });
+
+    // Manejar la desconexión del cliente
     socket.on('disconnect', () => {
-        delete socket.id;
-          
+        for (const [userId, id] of Object.entries(userSockets)) {
+            if (id === socket.id) {
+                delete userSockets[userId];
+                console.log(`Usuario desconectado: ${userId}`);
+                break;
+            }
+        }
     });
 });
 
