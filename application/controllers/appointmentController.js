@@ -1,9 +1,7 @@
 const { Patient, Appointment, Login, Notification } = require('../../domain/models');
+const { startOfDay, endOfDay } = require('date-fns');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
-const today = new Date();
-const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
 exports.register = async (req, res) => {
     const { id } = req.params;
@@ -101,19 +99,42 @@ exports.getAppointments = async (req, res) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+        const { date } = req.query;
+        console.log("Fecha recibida:", date);
+
+        if (!date) {
+            return res.status(400).json({ message: 'La fecha es obligatoria' });
+        }
+
+        const selectedDate = new Date(date); // Convierte la fecha del query a un objeto Date
+        console.log("Fecha convertida:", selectedDate);
+        const startOfSelectedDay = startOfDay(selectedDate);
+        const endOfSelectedDay = endOfDay(selectedDate);
+        console.log("Inicio del día:", startOfSelectedDay);
+        console.log("Fin del día:", endOfSelectedDay);
+
         const appointment = await Appointment.findAll({
             where: {
-                date: { [Op.between]: [startOfDay, endOfDay] }
+                [Op.and]: [
+                    {
+                        date: {
+                            [Op.between]: [startOfSelectedDay, endOfSelectedDay],
+                        },
+                    },
+                    {
+                        status: 'aceptada',
+                    },
+                ],
             },
             include: {
                 model: Patient,
                 attributes: ['id'],
                 include: {
                     model: Login,
-                    attributes: ['name']
+                    attributes: ['name'],
                 },
             },
-            order: [['time', 'ASC']]
+            order: [['time', 'ASC']],
         });
 
         res.status(200).json(appointment);

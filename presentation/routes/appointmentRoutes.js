@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/getAppointments', getAppointments);
 router.get('/availableHours', availableHours);
 router.post('/create/:id', register);
-router.post('/acept/:id', aceptApp);
-router.post('/cancel/:id', cancelApp);
+router.put('/confirm/:id', aceptApp);
+router.put('/cancel/:id', cancelApp);
 
 module.exports = router;

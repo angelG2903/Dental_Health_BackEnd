@@ -4,6 +4,10 @@ require('dotenv').config();
 const sequelize = new Sequelize(process.env.DATABASE_NAME, process.env.DATABASE_USER, process.env.DATABASE_PASSWORD, {
     host: process.env.DATABASE_HOST,
     dialect: process.env.DATABASE_DIALECT,
+    dialectOptions: {
+        timezone: 'Etc/GMT0', // Cambia según la necesidad
+    },
+    timezone: 'America/Mexico_City', // Convierte automáticamente las fechas
 });
 
 const connectDB = async () => {

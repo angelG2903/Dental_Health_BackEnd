@@ -14,7 +14,10 @@ exports.getNotifications = async (req, res) => {
                 },
                 {
                     model: Appointment,
-                    attributes: ['date', 'time']
+                    attributes: ['date', 'time'],
+                    where: {
+                        status: 'pendiente', // Filtra las notificaciones por status "pendiente" en Appointment
+                    },
                 }
             ],
             order: [['createdAt', 'ASC']] 
