@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const { where } = require('sequelize');
 
 // Función para mover archivos de la carpeta temporal a la carpeta final
 function moveFile(tempPath, finalPath) {
@@ -178,8 +177,8 @@ exports.getAllPatients = async (req, res) => {
             }]
         });
 
-        // Construir la URL completa para cada imagen de promoción
-        const baseUrl = req.protocol + '://' + req.get('host'); // http://localhost:3000
+        
+        const baseUrl = process.env.PROTOCOL + '://' + process.env.HOST_NAME;
         const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
 
         // Crear la lista de pacientes con las URLs de las imágenes
@@ -221,7 +220,7 @@ exports.getPatientById = async (req, res) => {
         }
 
         // Construir la URL base para las imágenes
-        const baseUrl = req.protocol + '://' + req.get('host'); // Ejemplo: http://localhost:3000
+        const baseUrl = process.env.PROTOCOL + '://' + process.env.HOST_NAME; // Ejemplo: http://localhost:3000
         const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
 
         // Convertir el paciente encontrado en un objeto plano de JavaScript
@@ -272,7 +271,7 @@ exports.getDoctorById = async (req, res) => {
 
         // Construir la URL base para las imágenes
         // const baseUrl = 'https' + '://' + req.get('host');
-        const baseUrl = req.protocol + '://' + '192.168.100.23:5000';
+        const baseUrl = process.env.PROTOCOL + '://' + process.env.HOST_NAME;
         const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
 
         // Convertir el doctor encontrado en un objeto plano de JavaScript
@@ -330,7 +329,7 @@ exports.getDoctorByIdReal = async (req, res) => {
 
         // Construir la URL base para las imágenes
         // const baseUrl = 'https' + '://' + req.get('host');
-        const baseUrl = req.protocol + '://' + '192.168.100.23:5000';
+        const baseUrl = process.env.PROTOCOL + '://' + process.env.HOST_NAME;
         const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
 
         // Convertir el doctor encontrado en un objeto plano de JavaScript

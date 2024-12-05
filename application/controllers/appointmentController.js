@@ -1,5 +1,4 @@
 const { Patient, Appointment, Login, Notification } = require('../../domain/models');
-const { startOfDay, endOfDay } = require('date-fns');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 
@@ -51,16 +50,23 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: 'There is already an appointment at this time' });
         }
 
-        // no permite que se duplique una cita
+        // no permite que se duplique una cita URGE QUE SE REVISE -------------------------------------------
         const duplicateAppointment = await Appointment.findOne({
             where: {
-                patientId: id
+                patientId: id,
+                status: {
+                    [Op.or]: ['aceptada', 'pendiente'], // Verifica ambos estados
+                },
+                date: {
+                    [Op.gte]: new Date(), // Asegúrate de que la cita existente sea para hoy o una fecha futura
+                },
             }
         });
 
         /* if (duplicateAppointment) {
             return res.status(400).json({ error: 'Appointment already exists for this patient' });
         } */
+       // no permite que se duplique una cita URGE QUE SE REVISE -------------------------------------------
 
         const newAppointment = await Appointment.create({ patientId: id, date, time });
 
@@ -106,20 +112,11 @@ exports.getAppointments = async (req, res) => {
             return res.status(400).json({ message: 'La fecha es obligatoria' });
         }
 
-        const selectedDate = new Date(date); // Convierte la fecha del query a un objeto Date
-        console.log("Fecha convertida:", selectedDate);
-        const startOfSelectedDay = startOfDay(selectedDate);
-        const endOfSelectedDay = endOfDay(selectedDate);
-        console.log("Inicio del día:", startOfSelectedDay);
-        console.log("Fin del día:", endOfSelectedDay);
-
         const appointment = await Appointment.findAll({
             where: {
                 [Op.and]: [
                     {
-                        date: {
-                            [Op.between]: [startOfSelectedDay, endOfSelectedDay],
-                        },
+                        date: date,
                     },
                     {
                         status: 'aceptada',
@@ -199,11 +196,8 @@ exports.cancelApp = async (req, res) => {
 }
 
 exports.availableHours = async (req, res) => {
-
-    // Horario permitido (personaliza aquí)
     const startHour = 9; // 9:00 AM
     const endHour = 17; // 5:00 PM
-
 
     try {
         const { date } = req.body;
@@ -213,13 +207,26 @@ exports.availableHours = async (req, res) => {
             return res.status(400).json({ error: 'Formato de fecha inválido. Usa YYYY-MM-DD.' });
         }
 
-        // Todas las horas dentro del rango permitido
-        const availableHours = [];
+        // Obtén la fecha y hora actual
+        const now = new Date();
+        const currentDate = now.toISOString().split('T')[0]; // Fecha actual en formato YYYY-MM-DD
+        const currentHour = now.getHours(); // Hora actual en formato 24 horas
+
+        // Generar todas las horas dentro del rango permitido
+        let availableHours = [];
         for (let hour = startHour; hour <= endHour; hour++) {
             availableHours.push(`${hour.toString().padStart(2, '0')}:00:00`);
         }
 
-        // Horas ya ocupadas en la tabla `appointment`
+        // Si es el mismo día, filtrar las horas que ya pasaron
+        if (date === currentDate) {
+            availableHours = availableHours.filter((hour) => {
+                const hourNumber = parseInt(hour.split(':')[0], 10);
+                return hourNumber > currentHour;
+            });
+        }
+
+        // Buscar citas ya ocupadas en la base de datos
         const appointments = await Appointment.findAll({
             where: {
                 date,
@@ -230,7 +237,7 @@ exports.availableHours = async (req, res) => {
             attributes: ['time'],
         });
 
-        // Filtra las horas disponibles
+        // Filtrar las horas disponibles
         const occupiedHours = appointments.map((a) => a.time);
         const freeHours = availableHours.filter((hour) => !occupiedHours.includes(hour));
 
@@ -239,4 +246,4 @@ exports.availableHours = async (req, res) => {
         console.error(error);
         res.status(500).json({ error: 'Error al obtener las horas disponibles' });
     }
-}
+};

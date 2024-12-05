@@ -79,7 +79,7 @@ exports.getAllPromotions = async (req, res) => {
         // Construir la URL completa para cada imagen de promoción
         // const baseUrl = req.protocol + '://' + req.get('host');
 
-        const baseUrl = req.protocol + '://' + '192.168.100.23:5000'; // http://localhost:3000
+        const baseUrl = process.env.PROTOCOL + '://' + process.env.HOST_NAME; // http://localhost:3000
         const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
 
         const promotionsWithImageUrls = promotions.map(promotion => {
@@ -113,7 +113,7 @@ exports.getPromotionById = async (req, res) => {
         });
 
         // Construir la URL completa de la imagen
-        const baseUrl = req.protocol + '://' + req.get('host');
+        const baseUrl = process.env.PROTOCOL + '://' + process.env.HOST_NAME;
         const imageDirectory = 'infrastructure/uploads/';
         const promotionalImageUrl = promotion.promotionalImage ? `${baseUrl}/${imageDirectory}${promotion.promotionalImage}` : null;
 
