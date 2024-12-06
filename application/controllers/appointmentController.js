@@ -66,7 +66,7 @@ exports.register = async (req, res) => {
         /* if (duplicateAppointment) {
             return res.status(400).json({ error: 'Appointment already exists for this patient' });
         } */
-       // no permite que se duplique una cita URGE QUE SE REVISE -------------------------------------------
+        // no permite que se duplique una cita URGE QUE SE REVISE -------------------------------------------
 
         const newAppointment = await Appointment.create({ patientId: id, date, time });
 
@@ -207,10 +207,28 @@ exports.availableHours = async (req, res) => {
             return res.status(400).json({ error: 'Formato de fecha inválido. Usa YYYY-MM-DD.' });
         }
 
-        // Obtén la fecha y hora actual
+        // Obtener la fecha y hora actual ajustada a la zona horaria de México
         const now = new Date();
-        const currentDate = now.toISOString().split('T')[0]; // Fecha actual en formato YYYY-MM-DD
-        const currentHour = now.getHours(); // Hora actual en formato 24 horas
+        const formatter = new Intl.DateTimeFormat('es-MX', {
+            timeZone: 'America/Mexico_City',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hourCycle: 'h23', // Formato 24 horas
+        });
+
+        const formattedDate = formatter.formatToParts(now);
+
+        const currentDate = `${formattedDate.find(part => part.type === 'year').value}-${formattedDate.find(part => part.type === 'month').value}-${formattedDate.find(part => part.type === 'day').value}`;
+        const currentHour = parseInt(formattedDate.find(part => part.type === 'hour').value, 10);
+
+        // Verificar si la fecha es hoy y ya pasó el rango de horas permitidas
+        if (date === currentDate && currentHour >= endHour) {
+            return res.json({ date, freeHours: [] });
+        }
 
         // Generar todas las horas dentro del rango permitido
         let availableHours = [];
@@ -218,7 +236,7 @@ exports.availableHours = async (req, res) => {
             availableHours.push(`${hour.toString().padStart(2, '0')}:00:00`);
         }
 
-        // Si es el mismo día, filtrar las horas que ya pasaron
+        // Si la fecha es hoy, filtrar horas que ya pasaron
         if (date === currentDate) {
             availableHours = availableHours.filter((hour) => {
                 const hourNumber = parseInt(hour.split(':')[0], 10);
@@ -247,3 +265,4 @@ exports.availableHours = async (req, res) => {
         res.status(500).json({ error: 'Error al obtener las horas disponibles' });
     }
 };
+
