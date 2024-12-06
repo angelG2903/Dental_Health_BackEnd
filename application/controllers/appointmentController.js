@@ -200,7 +200,7 @@ exports.availableHours = async (req, res) => {
     const endHour = 17; // 5:00 PM
 
     try {
-        const { date } = req.body;
+        const { date } = req.query;
 
         // Validar formato de fecha (YYYY-MM-DD)
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
