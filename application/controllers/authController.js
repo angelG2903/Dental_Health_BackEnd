@@ -203,14 +203,21 @@ exports.getAllPatients = async (req, res) => {
 };
 
 exports.getPatientById = async (req, res) => {
-    const { id } = req.params; // Obtener el ID del paciente desde los parámetros de la solicitud
+
+    const token = req.cookies.token || req.headers['authorization']; // O también puedes obtenerlo del Authorization header
+    if (!token) {
+        return res.status(401).json({ message: 'Token no proporcionado' });
+    }
 
     try {
+        // Verificar el token con la clave secreta
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
         const patient = await Patient.findOne({
-            where: { id }, // Buscar el paciente por ID
+            where: { loginId: decoded.loginId }, // Buscar el paciente por ID
             include: [{
                 model: Login,
-                attributes: ['name', 'lastName', 'gender', 'birthDate', 'phoneNumber', 'email', 'profilePicture']
+                attributes: ['name', 'lastName', 'gender', 'birthDate', 'phoneNumber', 'email', 'profilePicture', 'role']
             }]
         });
 
@@ -260,7 +267,7 @@ exports.getDoctorById = async (req, res) => {
             where: { loginId: decoded.loginId }, // Buscar el doctor por ID
             include: [{
                 model: Login,
-                attributes: ['name', 'lastName', 'gender', 'birthDate', 'phoneNumber', 'email', 'profilePicture']
+                attributes: ['name', 'lastName', 'gender', 'birthDate', 'phoneNumber', 'email', 'profilePicture', 'role']
             }]
         });
 
@@ -661,7 +668,7 @@ exports.login = async (req, res) => {
 
 exports.userInfo = async (req, res) => {
 
-    const token = req.cookies.token; // O también puedes obtenerlo del Authorization header
+    const token = req.cookies.token || req.headers['authorization']; // O también puedes obtenerlo del Authorization header
 
     if (!token) {
         return res.status(401).json({ message: 'Token no proporcionado' });
