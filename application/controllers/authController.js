@@ -204,17 +204,12 @@ exports.getAllPatients = async (req, res) => {
 
 exports.getPatientById = async (req, res) => {
 
-    const token = req.cookies.token || req.headers['authorization']; // O también puedes obtenerlo del Authorization header
-    if (!token) {
-        return res.status(401).json({ message: 'Token no proporcionado' });
-    }
+    const { id } = req.params;
 
     try {
-        // Verificar el token con la clave secreta
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         const patient = await Patient.findOne({
-            where: { loginId: decoded.loginId }, // Buscar el paciente por ID
+            where: { id },
             include: [{
                 model: Login,
                 attributes: ['name', 'lastName', 'gender', 'birthDate', 'phoneNumber', 'email', 'profilePicture', 'role']

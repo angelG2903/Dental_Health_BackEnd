@@ -15,7 +15,7 @@ router.post('/registerPatient', upload.fields([
 ]), registerPatient);
 
 router.get('/getPatient', getAllPatients);
-router.get('/getPatientId', getPatientById);
+router.get('/getPatient/:id', getPatientById);
 router.get('/getDoctor', getDoctorById);
 router.get('/getDoctorById/:id', getDoctorByIdReal);
 
