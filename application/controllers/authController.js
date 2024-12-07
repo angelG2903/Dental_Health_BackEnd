@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { decode } = require('punycode');
 
 // Función para mover archivos de la carpeta temporal a la carpeta final
 function moveFile(tempPath, finalPath) {
@@ -670,16 +671,39 @@ exports.userInfo = async (req, res) => {
     }
 
     try {
-        // Verificar el token con la clave secreta
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Enviar solo la información que el frontend necesita
-        res.json({
-            role: decoded.role,
-            loginId: decoded.loginId,
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const patient = await Patient.findOne({
+            where: { loginId: decoded.loginId },
+            include: [Login]
         });
-    } catch (err) {
-        res.status(403).json({ message: 'Token inválido o expirado' });
+
+        // Verificar si se encontró el paciente
+        if (!patient) {
+            return res.status(404).json({ error: 'Patient not found' });
+        }
+
+        // Construir la URL base para las imágenes
+        const baseUrl = process.env.PROTOCOL + '://' + process.env.HOST_NAME; // Ejemplo: http://localhost:3000
+        const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
+
+        // Convertir el paciente encontrado en un objeto plano de JavaScript
+        const patientData = patient.toJSON();
+
+        // Verificar si existe 'profilePicture' en el objeto 'Login' relacionado
+        const profilePictureUrl = patientData.Login && patientData.Login.profilePicture 
+            ? `${baseUrl}/${imageDirectory}${patientData.Login.profilePicture}` 
+            : null;
+
+        // Crear el objeto de respuesta con la URL de la imagen de perfil
+        const patientWithImageUrl = {
+            ...patientData,
+            profilePictureUrl, // Añadir la URL de la imagen de perfil
+        };
+
+        res.status(200).json(patientWithImageUrl);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error', details: error.message });
     }
 };
 
