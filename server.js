@@ -57,6 +57,26 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('confirmed', async (data) => {
+        const { toUserId } = data;
+        const targetSocketId = userSockets[toUserId];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('receive_private_notification', {
+                message: 'aceptada'
+            });
+        }
+    });
+
+    socket.on('cancel', async (data) => {
+        const { toUserId } = data;
+        const targetSocketId = userSockets[toUserId];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('receive_private_notification', {
+                message: 'cancelada'
+            });
+        }
+    });
+
     // Manejar la desconexión del cliente
     socket.on('disconnect', () => {
         for (const [userId, id] of Object.entries(userSockets)) {

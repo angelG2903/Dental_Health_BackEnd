@@ -74,9 +74,6 @@ exports.register = async (req, res) => {
             where: { id: validationId.loginId },
             attributes: ['name']
         });
-        const patientName = patientNameResult.name;
-
-        // falta meter la informacion de cuando fue su ultima cita si es que tuvo :D
 
         const notification = await Notification.create({
             patientId: id,
@@ -144,6 +141,55 @@ exports.getAppointments = async (req, res) => {
     }
 }
 
+exports.getAppointmentsByPatient = async (req, res) => {
+    const token = req.cookies.token || req.headers['authorization'];
+
+    if (!token) {
+        return res.status(401).json({ message: 'Token no proporcionado' });
+    }
+
+    try {
+        // Verificar el token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const patient = await Patient.findOne({
+            where: { loginId: decoded.loginId }
+        });
+
+        if (!patient) {
+            return res.status(404).json({ message: 'No hay paciente con ese id' });
+        }
+
+        // Buscar citas con el `patientId` y estados `pendiente` o `aceptada`
+        const appointments = await Appointment.findAll({
+            where: {
+                [Op.and]: [
+                    { patientId: patient.id }, // Filtrar por el ID del paciente
+                    { status: { [Op.in]: ['pendiente', 'aceptada'] } }, // Filtrar por los estados permitidos
+                ],
+            },
+            include: {
+                model: Patient,
+                attributes: ['id'],
+                include: {
+                    model: Login,
+                    attributes: ['name'],
+                },
+            },
+            order: [['date', 'ASC'], ['time', 'ASC']], // Ordenar por fecha y hora
+        });
+
+        // Responder con las citas encontradas
+        res.status(200).json(appointments);
+
+    } catch (error) {
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(403).json({ message: 'Token inválido' });
+        }
+        res.status(500).json({ error: 'Error en el servidor', details: error.message });
+    }
+};
+
 exports.aceptApp = async (req, res) => {
 
     const { id } = req.params;
@@ -157,9 +203,6 @@ exports.aceptApp = async (req, res) => {
 
         appointment.status = 'aceptada';
         await appointment.save();
-
-        // Aquí iría la lógica para enviar una notificación
-        // sendNotification(appointment.patientId, 'Tu cita ha sido aceptada');
 
         res.status(200).json({ message: 'Cita aceptada.', appointment });
 

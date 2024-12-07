@@ -28,3 +28,26 @@ exports.getNotifications = async (req, res) => {
         res.status(500).json({ error: 'server error', details: error.message });
     }
 };
+
+exports.deletedNotifications = async (req, res) => {
+
+    const { id } = req.params;
+
+    try {
+
+        const notificacion = await Notification.findOne({
+            where: { id }
+        });
+
+        if (!notificacion) {
+            return res.status(404).json({ message: 'No hay notificación con ese id' });
+        }
+
+
+        await Notification.destroy({ where: { id } });
+
+        res.status(200).json({ message: 'Notification deleted successfully' });
+    } catch (error) {
+        
+    }
+};
