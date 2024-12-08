@@ -11,6 +11,7 @@ const server = http.createServer(app);
 // app.use(cors()); // Middleware de CORS para Express
 
 
+app.use(express.urlencoded({ limit: '50mb', extended: true })); // Aumenta el límite
 
 const io = new Server(server, {
     cors: {
