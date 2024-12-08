@@ -20,7 +20,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use('/infrastructure/uploads', express.static(path.join(__dirname, '/infrastructure/uploads')));
-
+app.use(express.urlencoded({ limit: '50mb', extended: true })); // Aumenta el límite
 connectDB();
 
 // Sincronizar modelos (Solo en desarrollo)
