@@ -1,21 +1,9 @@
 const { Promotion, Doctor, Login } = require('../../domain/models');
-const fs = require('fs');
-const path = require('path');
-
-// Función para mover archivos de la carpeta temporal a la carpeta final
-function moveFile(tempPath, finalPath) {
-    fs.rename(tempPath, finalPath, (err) => {
-        if (err) throw err;
-    });
-}
-
-// Función para eliminar archivos de la carpeta temporal
-function deleteFile(filePath) {
-    fs.unlink(filePath, (err) => {
-        if (err) throw err;
-    });
-}
-
+const fs = require('fs/promises');
+const path = require('path'); // Para manejar rutas de archivo
+const uploadFile = require('../../infrastructure/utils/uploadFile');
+const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const s3Client = require('../../persistence/config/cellarConfig');
 
 exports.register = async (req, res) => {
 
@@ -26,41 +14,66 @@ exports.register = async (req, res) => {
     // Manejo de archivos subidos
     let promotionalImage = null;
 
-    // Rutas de directorio
-    const tempUploadDir = 'infrastructure/temp_uploads/';
-    const finalUploadDir = 'infrastructure/uploads/';
-
-    // Validación de archivos subidos
     if (req.files && req.files['promotionalImage'] && req.files['promotionalImage'][0]) {
-        promotionalImage = req.files['promotionalImage'][0].filename;
-            
+        promotionalImage = req.files['promotionalImage'][0];
     }
 
     try {
 
         if (!title || !description) {
-            if (promotionalImage) deleteFile(path.join(tempUploadDir, promotionalImage));
             return res.status(400).json({ error: 'Title and description are required' });
         }
 
         const validationId = await Doctor.findOne({ where: { id } });
-        
         if (!validationId) {
-            if (promotionalImage) deleteFile(path.join(tempUploadDir, promotionalImage));
             return res.status(404).json({ error: 'Doctor not found' });
         }
 
-        await Promotion.create({ doctorId: id, title, description, promotionalImage });
+        let imageUrl = null;
 
-        if (promotionalImage) moveFile(path.join(tempUploadDir, promotionalImage), path.join(finalUploadDir, promotionalImage));
+        const bucketName = process.env.CELLAR_BUCKET_NAME;
+        if (promotionalImage) {
+            const fileName = `promotions/${Date.now()}_${promotionalImage.originalname}`;
+            const mimeType = promotionalImage.mimetype;
+            console.log('Subiendo archivo:', promotionalImage);
+            console.log('Detalles del archivo:', {
+                bucketName,
+                filePath: promotionalImage.path,
+                fileName,
+                mimeType,
+            });
+            const normalizedPath = path.resolve(promotionalImage.path); // Normaliza la ruta
+            console.log('Ruta normalizada:', normalizedPath);
 
-        res.status(201).json({ doctorId: id, title, description });
+            imageUrl = await uploadFile(bucketName, normalizedPath, fileName, mimeType);
 
+            console.log('Archivo subido. URL:', imageUrl);
+        }
+
+        await Promotion.create({
+            doctorId: id,
+            title,
+            description,
+            promotionalImage: imageUrl,
+        });
+
+        res.status(201).json({ doctorId: id, title, description, promotionalImage: imageUrl });
     } catch (error) {
-        if (promotionalImage) deleteFile(path.join(tempUploadDir, promotionalImage));
-        res.status(500).json({ error: 'server error', details: error.message });
+        console.error('Error al registrar la promoción:', error);
+        res.status(500).json({ error: 'Server error', details: error.message });
+    } finally {
+        if (promotionalImage && promotionalImage.path) {
+            try {
+                await fs.unlink(promotionalImage.path); // Intentar eliminar el archivo
+                console.log('Archivo temporal eliminado correctamente');
+            } catch (unlinkError) {
+                if (unlinkError.code !== 'ENOENT') { // Ignorar si el archivo no existe
+                    console.error('Error al eliminar el archivo temporal:', unlinkError);
+                }
+            }
+        }
     }
-}
+};
 
 
 exports.getAllPromotions = async (req, res) => {
@@ -76,16 +89,10 @@ exports.getAllPromotions = async (req, res) => {
             }
         });
 
-        // Construir la URL completa para cada imagen de promoción
-        // const baseUrl = req.protocol + '://' + req.get('host');
-
-        const baseUrl = process.env.PROTOCOL + '://' + process.env.HOST_NAME; // http://localhost:3000
-        const imageDirectory = 'infrastructure/uploads/'; // Directorio donde están almacenadas las imágenes
-
         const promotionsWithImageUrls = promotions.map(promotion => {
             return {
-                ...promotion.toJSON(), // Convertir instancia de Sequelize a objeto plano
-                promotionalImageUrl: promotion.promotionalImage ? `${baseUrl}/${imageDirectory}${promotion.promotionalImage}` : null
+                ...promotion.toJSON(),
+                promotionalImageUrl: promotion.promotionalImage || null
             };
         });
 
@@ -112,10 +119,7 @@ exports.getPromotionById = async (req, res) => {
             }
         });
 
-        // Construir la URL completa de la imagen
-        const baseUrl = process.env.PROTOCOL + '://' + process.env.HOST_NAME;
-        const imageDirectory = 'infrastructure/uploads/';
-        const promotionalImageUrl = promotion.promotionalImage ? `${baseUrl}/${imageDirectory}${promotion.promotionalImage}` : null;
+        const promotionalImageUrl = promotion.promotionalImage || null;
 
         res.status(200).json({ ...promotion.toJSON(), promotionalImageUrl });
     } catch (error) {
@@ -128,60 +132,90 @@ exports.updatePromotion = async (req, res) => {
     const { id } = req.params;
     const { title, description } = req.body;
 
-    // Rutas de directorio
-    const tempUploadDir = 'infrastructure/temp_uploads/';
-    const finalUploadDir = 'infrastructure/uploads/';
-
     let promotionalImage = null;
 
     // Validación de archivos subidos
     if (req.files && req.files['promotionalImage'] && req.files['promotionalImage'][0]) {
-        promotionalImage = req.files['promotionalImage'][0].filename;
+        promotionalImage = req.files['promotionalImage'][0];
     }
 
     try {
-        
+
         const promotion = await Promotion.findOne({ where: { id } });
 
         if (!promotion) {
-            if (promotionalImage) deleteFile(path.join(tempUploadDir, promotionalImage));
+            if (promotionalImage) await fs.unlink(promotionalImage.path); // Eliminar el archivo temporal si no se encuentra la promoción
             return res.status(404).json({ error: 'Promotion not found' });
         }
 
         if (!title || !description) {
-            if (promotionalImage) deleteFile(path.join(tempUploadDir, promotionalImage));
+            if (promotionalImage) await fs.unlink(promotionalImage.path);
             return res.status(400).json({ error: 'Title and description are required' });
         }
 
-        // Si hay una nueva imagen, eliminar la anterior y mover la nueva
+        let newImageUrl = promotion.promotionalImage; // Mantener la URL anterior si no se sube una nueva
+
+        // Si se sube una nueva imagen, manejar la lógica de Cellar
         if (promotionalImage) {
-            // Eliminar la imagen anterior si existe
+            const bucketName = process.env.CELLAR_BUCKET_NAME; // Reemplaza con tu bucket en Cellar
+            const fileName = `promotions/${Date.now()}_${promotionalImage.originalname}`;
+            const mimeType = promotionalImage.mimetype;
+
+            // Subir la nueva imagen a Cellar
+            const fileContent = await fs.readFile(promotionalImage.path);
+            const uploadParams = {
+                Bucket: bucketName,
+                Key: fileName,
+                Body: fileContent,
+                ContentType: mimeType,
+                ACL: 'public-read',
+            };
+
+            const uploadCommand = new PutObjectCommand(uploadParams);
+            await s3Client.send(uploadCommand);
+            newImageUrl = `https://cellar-c2.services.clever-cloud.com/${bucketName}/${fileName}`;
+
+            // Eliminar la imagen anterior del bucket si existe
             if (promotion.promotionalImage) {
-                deleteFile(path.join(finalUploadDir, promotion.promotionalImage));
+                const oldFileName = promotion.promotionalImage.split(`${bucketName}/`)[1];
+                if (oldFileName) {
+                    const deleteParams = {
+                        Bucket: bucketName,
+                        Key: oldFileName,
+                    };
+                    const deleteCommand = new DeleteObjectCommand(deleteParams);
+                    await s3Client.send(deleteCommand);
+                }
             }
-            // Mover la nueva imagen al directorio final
-            moveFile(path.join(tempUploadDir, promotionalImage), path.join(finalUploadDir, promotionalImage));
-        } else {
-            // Si no hay una nueva imagen, mantener la existente
-            promotionalImage = promotion.promotionalImage;
+
+            // Eliminar el archivo temporal después de subir
+            await fs.unlink(promotionalImage.path);
         }
 
+        // Actualizar la promoción en la base de datos
         await Promotion.update(
-            { title, description, promotionalImage },
+            { title, description, promotionalImage: newImageUrl },
             { where: { id } }
         );
 
-        res.status(200).json({ message: 'Promotion updated successfully' });
+        res.status(200).json({ message: 'Promotion updated successfully', promotionalImage: newImageUrl });
     } catch (error) {
-        if (promotionalImage) deleteFile(path.join(tempUploadDir, promotionalImage));
+        if (promotionalImage && promotionalImage.path) {
+            try {
+                await fs.unlink(promotionalImage.path);
+            } catch (unlinkError) {
+                if (unlinkError.code !== 'ENOENT') { // Ignorar si el archivo no existe
+                    console.error('Error al eliminar el archivo temporal:', unlinkError);
+                }
+            }
+        }
+        console.error('Error al actualizar la promoción:', error);
         res.status(500).json({ error: 'server error', details: error.message });
     }
 }
 
 exports.deletePromotion = async (req, res) => {
     const { id } = req.params;
-
-    const finalUploadDir = 'infrastructure/uploads/';
 
     try {
         const promotion = await Promotion.findOne({ where: { id } });
@@ -192,14 +226,30 @@ exports.deletePromotion = async (req, res) => {
 
         // Eliminar la imagen asociada si existe
         if (promotion.promotionalImage) {
-            deleteFile(path.join(finalUploadDir, promotion.promotionalImage));
+            const bucketName = process.env.CELLAR_BUCKET_NAME; // Reemplaza con el nombre de tu bucket
+
+            // Extrae el nombre del archivo desde la URL si guardaste la URL completa
+            const fileName = promotion.promotionalImage.split(`${bucketName}/`)[1];
+
+            if (fileName) {
+                const deleteParams = {
+                    Bucket: bucketName,
+                    Key: fileName,
+                };
+
+                const deleteCommand = new DeleteObjectCommand(deleteParams);
+                await s3Client.send(deleteCommand);
+                console.log(`Archivo eliminado del bucket: ${fileName}`);
+            }
         }
 
+        // Eliminar la promoción de la base de datos
         await Promotion.destroy({ where: { id } });
 
         res.status(200).json({ message: 'Promotion deleted successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'server error', details: error.message });
+        console.error('Error al eliminar la promoción:', error);
+        res.status(500).json({ error: 'Server error', details: error.message });
     }
 }
 

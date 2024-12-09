@@ -1,4 +1,3 @@
-const { Op } = require('sequelize');
 const { Patient, Login, DentalExam, Teeth } = require('../../domain/models');
 
 const validationState = ['sano', 'cariado', 'obturado', 'od_perdido', 'protesis_parcial_r', 'od_reemplazado', 'protesis_fija', 'ext_indicada'];

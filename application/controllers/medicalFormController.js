@@ -1,7 +1,4 @@
-const { Op } = require('sequelize');
-
 const { Login, Patient, MedicalHistory, CardiovascularSystem, EtsDisease, PathologicalHistory, OralCavity } = require('../../domain/models');
-
 
 exports.register = async (req, res) => {
 
