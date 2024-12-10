@@ -125,7 +125,7 @@ exports.getAppointments = async (req, res) => {
                 attributes: ['id'],
                 include: {
                     model: Login,
-                    attributes: ['name'],
+                    attributes: ['id' ,'name'],
                 },
             },
             order: [['time', 'ASC']],
