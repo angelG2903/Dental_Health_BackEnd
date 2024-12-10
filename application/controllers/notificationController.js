@@ -48,7 +48,6 @@ exports.getNotificationsById = async (req, res) => {
                             { patientId: id },
                             { status: { [Op.in]: ['cancelada', 'aceptada'] } }, // Filtrar por los estados permitidos
                         ],
-                        status: 'pendiente', // Filtra las notificaciones por status "pendiente" en Appointment
                     },
                 }
             ],
