@@ -63,9 +63,9 @@ exports.register = async (req, res) => {
             }
         });
 
-        if (duplicateAppointment) {
+        /* if (duplicateAppointment) {
             return res.status(400).json({ error: 'Appointment already exists for this patient' });
-        }
+        } */
         // no permite que se duplique una cita URGE QUE SE REVISE -------------------------------------------
 
         const newAppointment = await Appointment.create({ patientId: id, date, time });
