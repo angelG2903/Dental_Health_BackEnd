@@ -219,7 +219,14 @@ exports.cancelApp = async (req, res) => {
 
     try {
 
-        const appointment = await Appointment.findOne({ where: { id, status: "pendiente" } });
+        const appointment = await Appointment.findOne({ 
+            where: {
+                [Op.and]: [
+                    { id },
+                    { status: { [Op.in]: ['pendiente', 'aceptada'] } },
+                ], 
+            } 
+        });
         if (!appointment) {
             return res.status(404).json({ error: 'Appointment  not found' });
         }
